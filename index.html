@@ -3476,16 +3476,27 @@ async function bootstrap() {
   try {
     const resMza = await fetch('https://slewoqpikgktfqtjgpve.supabase.co/storage/v1/object/public/sigex-data/MZA_GTO_POB.json');
     if (resMza.ok) {
-      const mzaData = await resMza.json();
-      loadManzanas(mzaData);
-      if (mzaData.features && mzaData.features.length > 0) {
+      const mzaRaw = await resMza.json();
+      let mzaData = mzaRaw;
+      // Convertir TopoJSON a GeoJSON si es necesario
+      if (mzaRaw && mzaRaw.type === 'Topology') {
+        if (typeof topojson === 'undefined') {
+          await new Promise(r => setTimeout(r, 1000));
+        }
+        const objName = Object.keys(mzaRaw.objects)[0];
+        mzaData = topojson.feature(mzaRaw, mzaRaw.objects[objName]);
+      }
+      if (!mzaData || !mzaData.features) {
+        console.warn('MZA_GTO_POB.json no tiene features válidas.');
+      } else {
+        loadManzanas(mzaData);
         try {
           const bounds = L.geoJSON(mzaData).getBounds();
-          map.fitBounds(bounds, { padding: [60, 60] });
+          if (bounds.isValid()) map.fitBounds(bounds, { padding: [60, 60] });
         } catch(e) {}
       }
     } else {
-      console.warn('MZA_GTO_POB.json no encontrado.');
+      console.warn('MZA_GTO_POB.json no encontrado. Status:', resMza.status);
     }
   } catch(e) {
     console.warn('No se pudo cargar MZA_GTO_POB.json:', e.message);
