@@ -3474,7 +3474,7 @@ async function bootstrap() {
   }
 
   try {
-    const resMza = await fetch('MZA_GTO_POB.json');
+    const resMza = await fetch('https://slewoqpikgktfqtjgpve.supabase.co/storage/v1/object/public/sigex-data/MZA_GTO_POB.json');
     if (resMza.ok) {
       const mzaData = await resMza.json();
       loadManzanas(mzaData);
