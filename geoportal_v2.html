@@ -16,7 +16,9 @@
     if (window._gmapsLoaded) return;
     window._gmapsLoaded = true;
     var s = document.createElement('script');
-    s.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY&libraries=places&callback=onGoogleMapsReady';
+    // ⚠️ Reemplaza con tu propia API Key de Google Maps (console.cloud.google.com)
+    var GMAPS_KEY = '';
+    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + GMAPS_KEY + '&libraries=places&callback=onGoogleMapsReady';
     s.async = true; s.defer = true;
     document.head.appendChild(s);
   }
@@ -324,6 +326,7 @@
     background: rgba(10,12,16,0.92); border: 1px solid var(--border);
     border-radius: 10px; padding: 18px 26px; backdrop-filter: blur(10px);
     font-size: 17px; min-width: 228px;
+    max-height: calc(100vh - 100px); overflow-y: auto;
   }
   .leg-title { font-family: var(--font-head); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 13px; }
   .leg-row { display: flex; align-items: center; gap: 13px; margin: 7px 0; font-size: 17px; }
@@ -359,8 +362,9 @@
   #basemap-selector {
     position: fixed;
     bottom: 20px;
+    /* centrado en el área del mapa, dejando espacio al panel izq y a la leyenda der */
     left: var(--panel-w);
-    right: 0;
+    right: 280px;   /* 228px leyenda + 52px margen */
     z-index: 600;
     display: flex;
     justify-content: center;
@@ -415,9 +419,9 @@
   /* ===== DRAW TOOLBAR FLOTANTE ===== */
   #draw-toolbar {
     position: fixed;
-    top: 30%;
-    right: 18px;
-    transform: translateY(-50%);
+    top: 72px;      /* justo debajo del topbar (58px altura) */
+    right: 16px;    /* alineado al borde derecho, mismo que la leyenda */
+    transform: none;
     z-index: 700;
     display: flex;
     flex-direction: column;
@@ -690,6 +694,11 @@
   /* ===== MARCADORES COMPETENCIA ===== */
   @keyframes comp-spin-cw  { to { transform: rotate(360deg);  } }
   @keyframes comp-spin-ccw { to { transform: rotate(-360deg); } }
+  @keyframes comp-pulse {
+    0%   { transform: scale(1);   opacity: 0.25; }
+    70%  { transform: scale(2.2); opacity: 0.08; }
+    100% { transform: scale(2.5); opacity: 0;    }
+  }
   .comp-ring-outer {
     position: absolute;
     border-radius: 50%;
@@ -715,7 +724,8 @@
     white-space: nowrap;
     text-align: center;
     letter-spacing: 0.4px;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.85), 0 0 8px rgba(0,0,0,0.6);
+    text-shadow: none;
+    color: #000;
     margin-bottom: 3px;
     line-height: 1;
     pointer-events: none;
@@ -750,6 +760,80 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .pdf-msg { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+
+  /* ===== Modal Formatos por Ciudad ===== */
+  #fmt-modal-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(3px);
+    align-items: center;
+    justify-content: center;
+  }
+  #fmt-modal-overlay.open { display: flex; }
+  #fmt-modal {
+    background: rgba(10,12,16,0.97);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 28px;
+    min-width: 420px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+    font-family: var(--font-mono);
+  }
+  body.theme-light #fmt-modal {
+    background: rgba(240,242,245,0.98);
+    box-shadow: 0 12px 48px rgba(0,0,0,0.18);
+  }
+  #fmt-modal h3 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: 0.04em;
+  }
+  #fmt-modal table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  #fmt-modal th {
+    padding: 7px 12px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  #fmt-modal th:first-child { text-align: left; }
+  #fmt-modal td {
+    padding: 7px 12px;
+    text-align: center;
+    color: var(--text);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  #fmt-modal td:first-child { text-align: left; font-weight: 600; }
+  #fmt-modal tr:last-child td { border-bottom: none; }
+  #fmt-modal tr.fmt-total-row td {
+    border-top: 1px solid var(--border);
+    font-weight: 700;
+    color: var(--accent2);
+  }
+  #fmt-modal td.fmt-zero { color: var(--muted); }
+  #fmt-modal .fmt-modal-close {
+    float: right;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    margin-top: -2px;
+  }
+  #fmt-modal .fmt-modal-close:hover { color: var(--text); }
 </style>
 </head>
 <body>
@@ -1099,6 +1183,14 @@
     <button class="btn" onclick="exportarKML()" style="background:rgba(251,191,36,0.15);border-color:rgba(251,191,36,0.5);color:#fbbf24;font-weight:700;">↓ KML Área</button>
     <button class="btn" onclick="exportarKMLManzanas()" style="background:rgba(168,85,247,0.15);border-color:rgba(168,85,247,0.5);color:#a855f7;font-weight:700;">↓ KML Área/Mzs</button>
   </div>
+  <!-- Limpiar Todo -->
+  <div style="padding:0 18px 14px;">
+    <button class="btn" onclick="limpiarTodo()"
+      style="width:100%;background:rgba(239,68,68,0.12);border-color:rgba(239,68,68,0.45);
+             color:#f87171;font-weight:700;font-size:13px;padding:9px;">
+      🗑️ Limpiar Todo
+    </button>
+  </div>
 </div>
 
 <!-- MAP -->
@@ -1143,11 +1235,7 @@
   <div id="comp-legend" style="display:none;border-top:1px solid var(--border);margin:10px 0 0;">
     <div class="leg-title" style="color:#f97316;margin-top:10px;">⚔️ Competidores</div>
     <div id="comp-legend-brands"><!-- JS generado --></div>
-    <div class="leg-row" style="margin-top:6px;">
-      <span style="display:inline-block;width:14px;height:14px;background:transparent;border:1.5px solid #94a3b8;transform:rotate(45deg);flex-shrink:0;"></span>
-      <span style="flex:1;font-size:11px;">Icono diamante ◆</span>
-    </div>
-  </div>
+  </div><!-- /comp-legend -->
 
   <!-- TomTom Traffic Legend (hidden by default) -->
   <div id="tt-legend" style="display:none">
@@ -1157,12 +1245,27 @@
     <div class="leg-row"><span style="display:inline-block;width:26px;height:4px;border-radius:2px;background:#eab308;flex-shrink:0;align-self:center;"></span> Moderado</div>
     <div class="leg-row"><span style="display:inline-block;width:26px;height:4px;border-radius:2px;background:#f97316;flex-shrink:0;align-self:center;"></span> Lento</div>
     <div class="leg-row"><span style="display:inline-block;width:26px;height:4px;border-radius:2px;background:#ef4444;flex-shrink:0;align-self:center;"></span> Congestionado</div>
+  </div><!-- /tt-legend -->
+</div><!-- /legend -->
+
+<!-- SELECTOR MAPA BASE -->
+<!-- Modal: Formatos por Ciudad -->
+<div id="fmt-modal-overlay" onclick="if(event.target===this)closeFmtModal()">
+  <div id="fmt-modal">
+    <h3>
+      <button class="fmt-modal-close" onclick="closeFmtModal()" title="Cerrar">×</button>
+      📊 Formatos por Ciudad — En Operación
+    </h3>
+    <div id="fmt-modal-body"></div>
   </div>
 </div>
 
-<!-- SELECTOR MAPA BASE -->
 <div id="basemap-selector">
   <div id="basemap-selector-inner">
+  <button class="bmap-btn" id="bmap-fmtcity" onclick="showFmtModal()" style="border-color:rgba(34,197,94,0.3);color:rgba(34,197,94,0.7);min-width:auto;padding:11px 14px;">
+    <span class="bmap-icon">📊</span>Formatos
+  </button>
+  <div style="width:1px;background:var(--border);margin:4px 2px;border-radius:1px;"></div>
   <button class="bmap-btn active" id="bmap-dark" onclick="setBasemap('dark')">
     <span class="bmap-icon">🌑</span>Dark
   </button>
@@ -1206,8 +1309,8 @@
       <span class="dtool-icon">🗂️</span>GeoJSON
     </button>
     <div class="dtool-divider"></div>
-    <button class="dtool-btn danger" id="dtool-clear" onclick="clearPolygon()" disabled>
-      <span class="dtool-icon">🗑️</span>Limpiar
+    <button class="dtool-btn danger" id="dtool-clear" onclick="limpiarTodo()" disabled>
+      <span class="dtool-icon">🗑️</span>Limpiar Todo
     </button>
   </div>
 </div>
@@ -1371,6 +1474,8 @@ function resetConsumo() {
 
 // Formatos visibles
 let visibleFmts = new Set(['Tipo A', 'Tipo B', 'MAXI-BARA']);
+// GeoJSON raw de sucursales (para tabla de formatos)
+let EXPENDIOS_GEOJSON = null;
 
 // Estado
 let map, circleLayer, manzanaLayer, expendioMarkers = [], centerPin = null;
@@ -1403,7 +1508,7 @@ const EXPENDIOS_DATA = {"type":"FeatureCollection","features":[]};
 // ============================================================
 //  DATOS COMPETENCIA REAL (Bajío — 194 competidores DENUE)
 // ============================================================
-const COMPETENCIA_DATA = {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6870438,21.1224798]},"properties":{"name":"ALEMANA","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"BELISARIO DOMÍNGUEZ","numero":"515.0","colonia":"BELLAVISTA","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6842874,21.07252352]},"properties":{"name":"ABASTOS","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"NINGUNO","numero":"12.0","colonia":"CIUDAD INDUSTRIAL","municipio":"León","alta":"2016-10","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7022921,21.13653401]},"properties":{"name":"AUSTRI","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"MANUEL DE AUSTRI","numero":"1604.0","colonia":"ESPAÑA","municipio":"León","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6896141,21.1395093]},"properties":{"name":"AV MEXICO","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"FRANCIA","numero":"806.0","colonia":"LA MODERNA","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6976907,21.1702376]},"properties":{"name":"BALCONES","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"PROVINCIAS DEL CAMPESTRE","numero":"1714.0","colonia":"BALCONES DEL CAMPESTRE","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.65181,21.10149652]},"properties":{"name":"BOCANEGRA","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"MÁRMOL","numero":"200.0","colonia":"AZTECA","municipio":"León","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6846528,21.16507549]},"properties":{"name":"CARCAMOS","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"ADOLFO LÓPEZ MATEOS","numero":"3305.0","colonia":"EL ROSARIO","municipio":"León","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6676385,21.12724681]},"properties":{"name":"COECILLO","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"ACAPULCO","numero":"309.0","colonia":"EL COECILLO","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6291254,21.08248039]},"properties":{"name":"DELTA","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"DELTA","numero":"1011.0","colonia":"VALLE DELTA","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6671482,21.17470418]},"properties":{"name":"ECHEVESTE","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"0 a 5 personas","calle":"HERMENEGILDO BUSTOS","numero":"123.0","colonia":"PORTALES DE LA ARBOLEDA","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6750233,21.14088489]},"properties":{"name":"HIDALGO 1","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"MIGUEL HIDALGO","numero":"705.0","colonia":"HEROES DE CHAPULTEPEC","municipio":"León","alta":"2020-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6695453,21.15263019]},"properties":{"name":"HIDALGO 2","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"BOULEVARD MIGUEL HIDALGO","numero":"2027.0","colonia":"VALLE DE LEON","municipio":"León","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6597626,21.16871871]},"properties":{"name":"IBARRILLA","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"IBARRILLA","numero":"826.0","colonia":"LOS ANGELES","municipio":"León","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7476981,21.14013228]},"properties":{"name":"JOYAS","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"UNAMUNO","numero":"367.0","colonia":"LA JOYA","municipio":"León","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6903869,21.10545788]},"properties":{"name":"JUAREZ","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"JUÁREZ","numero":"1805.0","colonia":"LOS FRESNOS","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6627073,21.13727992]},"properties":{"name":" LAS TROJES","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"ANTONIO MADRAZO","numero":"805.0","colonia":"LAS TROJES","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7316626,21.12025611]},"properties":{"name":"LEON II","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"MARÍA ESTHER VALTIERRA","numero":"301.0","colonia":"LEON II","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6211012,21.14796618]},"properties":{"name":"LOMAS DE MEDINA","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"LOMA DE PETUNIAS","numero":"302.0","colonia":"MEDINA","municipio":"León","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6543495,21.15221746]},"properties":{"name":"MADRAZO","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"ANTONIO MADRAZO","numero":"2902.0","colonia":"SANTA ROSA DE LIMA","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.710974,21.11238729]},"properties":{"name":"MANDARINAS","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"MIGUEL DE CERVANTES SAAVEDRA","numero":"1142.0","colonia":"LAS MANDARINAS","municipio":"León","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.729731,21.15215027]},"properties":{"name":"MIRADOR","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"SAN JUAN BOSCO","numero":"4201.0","colonia":"LOMAS DEL MIRADOR","municipio":"León","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6133927,21.10192354]},"properties":{"name":"OLIMPICA","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"0 a 5 personas","calle":"OLÍMPICA","numero":"1501.0","colonia":"PRADERAS AGUA AZUL","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6754733,21.18550077]},"properties":{"name":"PASEOS DE LA PRESA","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"PASEO DE LA PRESA","numero":"1497.0","colonia":"SAN NICOLAS DEL PALOTE II","municipio":"León","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6476423,21.10830503]},"properties":{"name":"PRADERA","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"AVENIDA DEL VALLE DE MANZANARES","numero":"1004.0","colonia":"PARQUE MANZANARES","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6872929,21.1225556]},"properties":{"name":"RIVERA CENTRO","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"BELISARIO DOMÍNGUEZ","numero":"609.0","colonia":"BELLAVISTA","municipio":"León","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6839728,21.15723805]},"properties":{"name":"ROSARIO","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"ADOLFO LÓPEZ MATEOS","numero":"2719.0","colonia":"EL ROSARIO","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.8504211,21.01845454]},"properties":{"name":"SN FRANCISCO","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"AQUILES SERDÁN","numero":"206.0","colonia":"CENTRO","municipio":"San Francisco del Rincón","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6846549,21.10121133]},"properties":{"name":"SN MIGUEL","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"0 a 5 personas","calle":"RÍO FLORIDO","numero":"202.0","colonia":"SAN MIGUEL","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.650787,21.08151552]},"properties":{"name":"SN PEDRO","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"SAN PEDRO","numero":"1812.0","colonia":"PARQUES DEL SUR 2DA SECCION","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6728383,21.10035027]},"properties":{"name":"STA CLARA","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"0 a 5 personas","calle":"JUAN JOSÉ TORRES LANDA ORIENTE","numero":"2004.0","colonia":"SANTA CLARA","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.65009,21.13212175]},"properties":{"name":"SION","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"AVENIDA SION","numero":"1304.0","colonia":"SAN FELIPE DE JESUS","municipio":"León","alta":"2019-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6465635,21.15329491]},"properties":{"name":"TELLEZ CRUCES","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"HILARIO MEDINA","numero":"","colonia":"SAN JOSE DEL CONSUELO","municipio":"León","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6453566,21.09758425]},"properties":{"name":"TORRES LANDA","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"JUAN JOSÉ TORRES LANDA ORIENTE","numero":"101.0","colonia":"SAN ISIDRO","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6188181,21.07501111]},"properties":{"name":"VALLE REAL","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"ATOTONILCO","numero":"241.0","colonia":"VALLE REAL","municipio":"León","alta":"2019-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6415768,21.07773034]},"properties":{"name":"VILLAS DE LEON","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"0 a 5 personas","calle":"DE LA MORADA","numero":"","colonia":"LA NORIA","municipio":"León","alta":"2019-04","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.5848707,21.103744]},"properties":{"name":"VILLAS DE SN JUAN","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"CONSTELACIONES","numero":"621.0","colonia":"VILLAS DE SAN  JUAN","municipio":"León","alta":"2023-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6930627,21.13906996]},"properties":{"name":"LA ALEMANA","brand":"La Alemana","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"ROMITA","numero":"3728.0","colonia":"LOMAS DE LA TRINIDAD","municipio":"León","alta":"2020-11","color":"#06b6d4"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6550374,21.13008827]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"VICENTE VALTIERRA","numero":"2642.0","colonia":"BARRIO DE CUECILLO","municipio":"León","alta":"2014-12","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7230554,20.42560682]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"ALDAMA","numero":"77.0","colonia":"PENJAMO CENTRO","municipio":"Pénjamo","alta":"2019-11","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3665225,20.69279453]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"AVENIDA DE LA REFORMA","numero":"1464.0","colonia":"JARDINES DE VALLE","municipio":"Irapuato","alta":"2019-04","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.842401,20.53269962]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"CAMINO A SAN JOSE GUANAJUATO","numero":"443.0","colonia":"LOS SAUCES","municipio":"Celaya","alta":"2016-01","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6828177,21.11352009]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"CHUPARRUSA","numero":"263.0","colonia":"JUAN DE DIOS","municipio":"León","alta":"2016-01","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.7612471,20.91524623]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"CALZADA DE LA ESTACIÓN","numero":"131.0","colonia":"CENTRO","municipio":"San Miguel de Allende","alta":"2014-12","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3466676,20.66607686]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"GUANAJUATO","numero":"601.0","colonia":"CENTRO","municipio":"Irapuato","alta":"2014-12","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.806604,20.53656407]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"IRRIGACIÓN","numero":"151.0","colonia":"AMPLIACION EMILIANO ZAPATA","municipio":"Celaya","alta":"2016-01","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.8610298,21.01603631]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"JOSEFA ORTIZ DE DOMINGUEZ","numero":"421.0","colonia":"SAN FRANCISCO DEL RINCON CENTRO","municipio":"San Francisco del Rincón","alta":"2016-01","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2849544,20.98841653]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"GUANAJUATO-JUVENTINO ROSAS","numero":"8.0","colonia":"BUROCRATAS","municipio":"Guanajuato","alta":"2014-12","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2030945,20.55669868]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"VALLE DE SANTIAGO","numero":"1204.0","colonia":"CENTRO","municipio":"Salamanca","alta":"2014-12","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.4729759,19.70328057]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"MADERO Y CARRANZA","numero":"330.0","colonia":"CENTRO","municipio":"Zapotlán el Grande","alta":"2010-07","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-105.220312,20.64617074]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"FRANCISCO VILLA","numero":"1519.0","colonia":"FLUVIAL VALLARTA","municipio":"Puerto Vallarta","alta":"2014-12","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.0283506,20.34754222]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"LÁZARO CÁRDENAS","numero":"444.0","colonia":"MEXICO","municipio":"La Piedad","alta":"2019-04","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.187869,19.69538629]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"VICENTE SANTA MARÍA","numero":"707.0","colonia":"VENTURA FUENTE","municipio":"Morelia","alta":"2019-04","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.2885455,19.98246972]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"FRANCISCO I. MADERO SUR","numero":"440.0","colonia":"CENTRO","municipio":"Zamora","alta":"2019-04","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.1988123,19.73554403]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"TORREÓN NUEVO","numero":"1540.0","colonia":"TORREON NUEVO","municipio":"Morelia","alta":"2019-04","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.0561243,19.39869247]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"PASEO GENERAL LÁZARO CÁRDENAS","numero":"224.0","colonia":"LA MAGDALENA","municipio":"Uruapan","alta":"2019-04","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.411286,20.55257025]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"ZARGOZA","numero":"1067.0","colonia":"VALLE DE LOS OLIVOS","municipio":"Corregidora","alta":"2019-11","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4339767,20.6079607]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"REVOLUCION","numero":"0.0","colonia":"PLUTARCO DIAS CALLES","municipio":"Querétaro","alta":"2019-11","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4064235,20.64879782]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"CALZADA DE BELÉN","numero":"633.0","colonia":"LOMAS DE SAN PEDRITO PIÑUELAS","municipio":"Querétaro","alta":"2019-04","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4510288,20.63483876]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"AVENIDA DE LAS FUENTES","numero":"1511.0","colonia":"CIUDAD SATELITE","municipio":"Querétaro","alta":"2019-04","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.9875794,20.38157091]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"BENITO JUÁREZ ORIENTE","numero":"243.0","colonia":"INFONAVIT SAN CAYETANO","municipio":"San Juan del Río","alta":"2019-04","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.9750287,22.16100346]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"PEDRO MONTOYA","numero":"320.0","colonia":"CENTRO","municipio":"San Luis Potosí","alta":"2013-07","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.9343413,22.14225672]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"RICARDO B. ANAYA","numero":"1571.0","colonia":"PROVIDENCIA","municipio":"San Luis Potosí","alta":"2014-12","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.99299852,21.92803154]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"MORELOS","numero":"0.0","colonia":"CENTRO","municipio":"Rioverde","alta":"2010-07","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.6437032,23.64903531]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"MIGUEL HIDALGO","numero":"0.0","colonia":"CENTRO","municipio":"Matehuala","alta":"2010-07","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.01217467,21.98940809]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"MÉXICO-LAREDO","numero":"5.0","colonia":"CENTRO","municipio":"Ciudad Valles","alta":"2014-12","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.0015832,22.18397238]},"properties":{"name":"CARNEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"FRAY DIEGO DE LA MAGDALENA","numero":"3032.0","colonia":"EL SAUCITO","municipio":"San Luis Potosí","alta":"2019-11","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6504944,21.09697811]},"properties":{"name":"CARMEMART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"J J TORRE LANDA ORIENTE","numero":"2613.0","colonia":"AZTECAS","municipio":"León","alta":"2014-12","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.179038,20.12352055]},"properties":{"name":"CARNE MART","brand":"Onus","razon":"ONUS COMERCIA SA DE CV","estrato":"","calle":"URIANGATO","numero":"","colonia":"LA JOYITA","municipio":"Uriangato","alta":"2019-11","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3668766,20.69318058]},"properties":{"name":"CARNE MART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"AVENIDA DE LA REFORMA","numero":"1474.0","colonia":"JARDINES DEL VALLE","municipio":"Irapuato","alta":"2019-11","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.9500936,22.12616926]},"properties":{"name":"CARNE MART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"SALK","numero":"1335.0","colonia":"PROGRESO","municipio":"San Luis Potosí","alta":"2019-11","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.4291372,20.949613]},"properties":{"name":"CARNE MART","brand":"Onus","razon":"ONUS COMERCIAL SA DE CV","estrato":"","calle":"RAÚL BAILLERES PONIENTE","numero":"42.0","colonia":"JARDINES DE LA VICTORIA","municipio":"Silao de la Victoria","alta":"2016-10","color":"#84cc16"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.1820413,20.39256849]},"properties":{"name":"SUCAHERSA","brand":"Hernandez","razon":"SUPER CARNICERIA HERNANDEZ SA DE CV","estrato":"","calle":"5 DE MAYO","numero":"15.0","colonia":"VALLE DE SANTIAGO CENTRO","municipio":"Valle de Santiago","alta":"2019-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3654099,20.66953902]},"properties":{"name":"SUCAHERSA","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"INDEPENDENCIA","numero":"1786.0","colonia":"MIGUEL HIDALGO","municipio":"Irapuato","alta":"2014-12","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8121537,20.5200891]},"properties":{"name":"SUCAHERSA","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"GUADALUPE VICTORIA","numero":"111.0","colonia":"CENTRO","municipio":"Celaya","alta":"2010-07","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.1848165,20.39453485]},"properties":{"name":"SUCAHERSA","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"MENA","numero":"0.0","colonia":"VALLE DE SANTIAGO CENTRO","municipio":"Valle de Santiago","alta":"2019-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.9928224,20.64326733]},"properties":{"name":"SUCAHERSA","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"MIGUEL HIDALGO","numero":"218.0","colonia":"ZONA CENTRO","municipio":"Santa Cruz de Juventino Rosas","alta":"2019-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2046482,20.55862283]},"properties":{"name":"BARAHONA","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"IRAPUATO","numero":"1003.0","colonia":"GUANAJUATO","municipio":"Salamanca","alta":"2018-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.1580066,20.53835239]},"properties":{"name":"BARLOVENTO","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"PUERTO SAAVEDRA NORTE","numero":"100.0","colonia":"BARLOVENTO","municipio":"Salamanca","alta":"2014-12","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6294479,21.08227862]},"properties":{"name":"DELTA","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"DELTA","numero":"914.0","colonia":"VALLE DELTA","municipio":"León","alta":"2023-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3261749,20.68717292]},"properties":{"name":"EL ENCANTO","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"PASEO DE LA ACACIA","numero":"153.0","colonia":"EL ENCANTO","municipio":"Irapuato","alta":"2023-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8262669,20.52644586]},"properties":{"name":"FRANCISCO JUAREZ","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"PROFESOR FRANCISCO JUÁREZ","numero":"630.0","colonia":"SANTA ANITA","municipio":"Celaya","alta":"2018-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2005499,20.57415332]},"properties":{"name":"FRANCISCO VILLA","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"AVENIDA DEL TRABAJO","numero":"230.0","colonia":"CENTRO","municipio":"Salamanca","alta":"2016-01","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.9928118,20.64326742]},"properties":{"name":"JUVENTINO ROSAS","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"MIGUEL HIDALGO","numero":"218.0","colonia":"CENTRO","municipio":"Santa Cruz de Juventino Rosas","alta":"2016-10","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.1906744,20.55958951]},"properties":{"name":"LA GLORIA","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"SAN RAFAEL","numero":"403.0","colonia":"LA GLORIA","municipio":"Salamanca","alta":"2014-12","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3433528,20.67547922]},"properties":{"name":"LEANDRO VALLE","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"LEANDRO VALLE","numero":"358.0","colonia":"CENTRO","municipio":"Irapuato","alta":"2018-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.1993931,20.57262978]},"properties":{"name":"MDO TOMASA ESTEVES","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"MARIANO ABASOLO","numero":"","colonia":"CENTRO","municipio":"Salamanca","alta":"2014-12","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8141378,20.51947825]},"properties":{"name":"LOPEZ MATEOS","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"ADOLFO LÓPEZ MATEOS","numero":"104.0","colonia":"CENTRO","municipio":"Celaya","alta":"2023-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2077064,20.5553554]},"properties":{"name":"LOS PINOS","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"DAVID ALFARO SIQUEIROS","numero":"114.0","colonia":"LOS PINOS","municipio":"Salamanca","alta":"2014-12","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3490307,20.66211411]},"properties":{"name":"LOS REYES","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"LOS REYES","numero":"32.0","colonia":"LOS REYES","municipio":"Irapuato","alta":"2023-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7016887,21.13971746]},"properties":{"name":"MANUEL DE AUSTRI","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"MANUEL DE AUSTRI","numero":"2202.0","colonia":"SAN JOSE OBRERO","municipio":"León","alta":"2023-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2001646,20.55465437]},"properties":{"name":"MOLINITO","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"COMUNICACIÓN NORTE","numero":"201.0","colonia":"EL CERRITO","municipio":"Salamanca","alta":"2018-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.1885523,20.13469493]},"properties":{"name":"MOROLEON","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"HEROICO COLEGIO MILITAR","numero":"21.0","colonia":"CENTRO","municipio":"Moroleón","alta":"2016-10","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2190174,20.5683149]},"properties":{"name":"SAN JAVIER","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"GUADALUPE","numero":"316.0","colonia":"SAN JAVIER","municipio":"Salamanca","alta":"2019-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2096073,20.57716456]},"properties":{"name":"SAN ROQUE","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"CALLE DEL TRABAJO","numero":"1210.0","colonia":"SAN ROQUE","municipio":"Salamanca","alta":"2014-12","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.4237621,20.9496198]},"properties":{"name":"SILAO","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"RAÚL BAILLERES ORIENTE","numero":"153.0","colonia":"CENTRO","municipio":"Silao de la Victoria","alta":"2018-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7084092,21.10329747]},"properties":{"name":"TORRES LANDA","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"JUAN JOSÉ TORRES LANDA PONIENTE","numero":"3110.0","colonia":"LA PISCINA","municipio":"León","alta":"2018-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.1842827,20.39444441]},"properties":{"name":"VALLE MENA","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"MENA","numero":"201.0","colonia":"CENTRO","municipio":"Valle de Santiago","alta":"2019-11","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6871802,21.12011951]},"properties":{"name":"MIGUEL ALEMAN","brand":"Sucaherza","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"","calle":"MIGUEL ALEMÁN","numero":"612.0","colonia":"BELLAVISTA","municipio":"León","alta":"2014-12","color":"#f43f5e"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.2495133,21.88353834]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PASEO DE VILLERIAS","numero":"2318.0","colonia":"VILLERIAS","municipio":"Aguascalientes","alta":"2020-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.2924152,21.91348874]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"CHABACANO","numero":"26.0","colonia":"CENTRO COMERCIAL AGROPECUARIOS","municipio":"Aguascalientes","alta":"2017-03","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.3056923,21.85880606]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"AGUASCALIENTES SUR","numero":"701.0","colonia":"BOULEVARES","municipio":"Aguascalientes","alta":"2017-03","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.2820376,21.88251749]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"ALAMEDA","numero":"205.0","colonia":"DE LA ESTACION","municipio":"Aguascalientes","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.2495901,21.88359357]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"SIGLO XXI","numero":"2318.0","colonia":"VILLERIAS","municipio":"Aguascalientes","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8265045,20.5532049]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"MEXICO-JAPON","numero":"101.0","colonia":"CIUDADELA","municipio":"Celaya","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8467512,20.53412369]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"EJE NOR-PONIENTE","numero":"","colonia":"EL BECERRO","municipio":"Celaya","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7075766,21.11842683]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"MIGUEL DE CERVANTES SAAVEDRA","numero":"525.0","colonia":"EL SALTO","municipio":"León","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.350081,20.65088761]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"MARIANO J. GARCÍA ","numero":"1315.0","colonia":"VALLE DEL SOL","municipio":"Irapuato","alta":"2014-12","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6829185,21.11363633]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"ACCESO SUR","numero":"224.0","colonia":"SAN JUAN DE DIOS","municipio":"León","alta":"2010-07","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8105841,20.50997445]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"CONSTITUYENTES","numero":"303.0","colonia":"BONANZA","municipio":"Celaya","alta":"2010-07","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8266148,20.55321586]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"MÉXICO-JAPÓN","numero":"15.0","colonia":"CIUDADELA","municipio":"Celaya","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.9237986,21.15542677]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"CALZADA DE LOS HÉROES","numero":"16.0","colonia":"CENTRO","municipio":"Dolores Hidalgo Cuna de la Independencia Nacional","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.84671,20.53422275]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"EJE NOR-PONIENTE","numero":"","colonia":"VILLA DE LOS REYES","municipio":"Celaya","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.205619,20.58026901]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"FAJA DE ORO","numero":"906.0","colonia":"SAN JUAN","municipio":"Salamanca","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.288734,20.98451771]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"SILAO-GUANAJUATO","numero":"501.0","colonia":"PEÑITAS","municipio":"Guanajuato","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6817589,21.07621919]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"HERMANOS ALDAMA","numero":"4912.0","colonia":"CIUDAD INDUSTRIAL","municipio":"León","alta":"2014-12","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.724456,21.13904864]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"SAN JUAN BOSCO","numero":"2506.0","colonia":"LA JOYA","municipio":"León","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6780455,21.13343486]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"MIGUEL HIDALGO","numero":"101.0","colonia":"LOS REYES","municipio":"León","alta":"2010-07","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7235084,20.42523908]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"ALDAMA","numero":"52.0","colonia":"CENTRO","municipio":"Pénjamo","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6349841,21.14879371]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"JOSÉ MARÍA MORELOS","numero":"4.0","colonia":"PRADO HERMOSO","municipio":"León","alta":"2010-07","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7075606,21.11847041]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"MIGUEL DE CERVANTES SAAVEDRA","numero":"1.0","colonia":"EL SALTO","municipio":"León","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.8623721,21.02862287]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"JUVENTINO ROSAS","numero":"207.0","colonia":"LAZARO CARDENAS","municipio":"San Francisco del Rincón","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.4199769,20.94400807]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"5 DE MAYO","numero":"97.0","colonia":"CENTRO","municipio":"Silao de la Victoria","alta":"2017-03","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6371801,21.0972092]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"JUAN JOSÉ TORRES LANDA ORIENTE","numero":"7107.0","colonia":"SAN ISIDRO DEL JEREZ","municipio":"León","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.646443,21.12817103]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"GENERAL FRANCISCO VILLA","numero":"1818.0","colonia":"JARDINES DE ORIENTE","municipio":"León","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.35762,20.68829978]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"GUERRERO","numero":"1871.0","colonia":"GAMEZ","municipio":"Irapuato","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.4335247,20.64138463]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"FELIPE RUVALCABA","numero":"","colonia":"PASEOS DEL SOL","municipio":"Zapopan","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.3855942,20.65563805]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PASEO DE LA ARBOLEDA","numero":"1229.0","colonia":"MERCADO DE ABASTOS","municipio":"Guadalajara","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.9198057,21.36228292]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"FELIX RAMIREZ RENTARIA","numero":"155.0","colonia":"PUEBLO DE MOYA","municipio":"Lagos de Moreno","alta":"2020-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.3740502,20.52947578]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"CONCEPCION","numero":"12.0","colonia":"CONCEPCION DEL VALLE","municipio":"Tlajomulco de Zúñiga","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.3851929,20.58335647]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"JESÚS MICHEL GONZÁLEZ","numero":"2156.0","colonia":"SAN SEBASTIANITO","municipio":"San Pedro Tlaquepaque","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-104.0415439,20.53783507]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PATRIA L. PONIENTE","numero":"12.0","colonia":"CENTRO","municipio":"Ameca","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.385593,20.65565308]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PASEO DE LA ARBOLEDA","numero":"1229.0","colonia":"DEL BOSQUE","municipio":"Guadalajara","alta":"2010-07","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.3532987,20.71669251]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"GRANADITOS","numero":"127.0","colonia":"ATEMAJAC","municipio":"Zapopan","alta":"2017-03","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.3249529,20.68918877]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"BELISARIO DOMÍNGUEZ","numero":"1214.0","colonia":"LOMAS INDEPENDENCIA","municipio":"Guadalajara","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.4675562,19.69297953]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PRIMERO DE MAYO","numero":"507.0","colonia":"CENTRO CIUDAD GUZMAN","municipio":"Zapotlán el Grande","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.2015305,20.29205052]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"HIDALGO","numero":"291.0","colonia":"LOURDES","municipio":"Chapala","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.4001538,20.63376628]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"CRUZ DEL SUR","numero":"3195.0","colonia":"LOMAS DE LA VICTORIA","municipio":"San Pedro Tlaquepaque","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.3027688,20.67231019]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"FELIPE ÁNGELES","numero":"2197.0","colonia":"BLANCO Y CUELLAR","municipio":"Guadalajara","alta":"2014-12","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.4335126,20.64145618]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"FELIPE RUVALCABA","numero":"5735.0","colonia":"PASEOS DEL SOL","municipio":"Zapopan","alta":"2017-03","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.3239459,20.65085774]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"MARCELINO GARCÍA BARRAGÁN","numero":"1637.0","colonia":"OLIMPICA","municipio":"Guadalajara","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.54644,20.29065456]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"HIDALGO","numero":"701.0","colonia":"CENTRO","municipio":"La Barca","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.358191,20.65382553]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"8 DE JULIO","numero":"1531.0","colonia":"MORELOS","municipio":"Guadalajara","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.9199553,21.36214323]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"FÉLIX RAMÍREZ RENTARÍA","numero":"155.0","colonia":"PUEBLO MONTOYA","municipio":"Lagos de Moreno","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-105.2292622,20.63157298]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"FRANCISCO MEDINA ASCENCIO","numero":"1849.0","colonia":"LAS GLORIAS","municipio":"Puerto Vallarta","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-105.2414021,20.69453148]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"NUEVO MALECÓN","numero":"5450.0","colonia":"LAS JUNTAS","municipio":"Puerto Vallarta","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.3906366,20.7272059]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PINO SUÁREZ","numero":"473.0","colonia":"EL VIGIA","municipio":"Zapopan","alta":"2016-10","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-105.2290419,20.65184865]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"MARÍA MONTESSORI","numero":"180.0","colonia":"SAN CLEMENTE DE LIMA","municipio":"Puerto Vallarta","alta":"2014-12","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.78019,20.35441815]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"OAXACA","numero":"410.0","colonia":"SANTA CECILIA","municipio":"Ocotlán","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.3494538,20.72973642]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"MORELOS","numero":"1870.0","colonia":"GONZALEZ ORTEGA","municipio":"Zapopan","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.2667154,20.6783003]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"SAN GASPAR","numero":"11.0","colonia":"LOMAS DEL LAUREL","municipio":"Tonalá","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.3275038,21.25104016]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"RAMÓN MARTÍN HUERTA","numero":"465.0","colonia":"CENTRO","municipio":"San Juan de los Lagos","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.3740501,20.52947578]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"CONCEPCIÓN","numero":"12.0","colonia":"SANTA FE","municipio":"Tlajomulco de Zúñiga","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.4250864,20.73004483]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"SANTA MARGARITA","numero":"","colonia":"GIRASOLES 4","municipio":"Zapopan","alta":"2017-03","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.7582488,20.80493249]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"ANACLETO GONZÁLEZ FLORES SUR","numero":"636.0","colonia":"CENTRO","municipio":"Tepatitlán de Morelos","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.832329,20.88206682]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"INTERNACIONAL","numero":"319.0","colonia":"LOPEZ MATEOS","municipio":"Tequila","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.4492967,20.77181702]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"JUAN GIL PRECIADO","numero":"6010.0","colonia":"MARCELINO GARCIA BARRAGAN","municipio":"Zapopan","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.4433739,20.47574789]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PEDRO SALCIDO","numero":"70.0","colonia":"CENTRO","municipio":"Tlajomulco de Zúñiga","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.2853654,20.63197199]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PATRIA","numero":"258.0","colonia":"LA SOLEDAD","municipio":"San Pedro Tlaquepaque","alta":"2017-03","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.2500853,20.6187668]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"TONALÁ","numero":"240.0","colonia":"SAN ELIAS","municipio":"Tonalá","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-105.2204299,20.64441371]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"CARDENAL","numero":"1516.0","colonia":"LOS SAUCES","municipio":"Puerto Vallarta","alta":"2010-07","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.0258447,20.3459989]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"LAZARO CARDENAS","numero":"266.0","colonia":"CENTRO","municipio":"La Piedad","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2256653,19.70758868]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"ESCUADRON 201 (DECIMA)","numero":"320.0","colonia":"TORRES DEL TEPEYAC","municipio":"Morelia","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.4707238,20.2661057]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"VISTA HERMOSA - TANHUATO","numero":"","colonia":"SANTA MARIA","municipio":"Vista Hermosa","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.171606,19.71795145]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PIÑA","numero":"8.0","colonia":"MERCADO DE ABASTOS","municipio":"Morelia","alta":"2016-01","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.2851243,19.9799144]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"LEONARDO CASTELLANOS ORIENTE","numero":"220.0","colonia":"JARDINES DE CATEDRAL","municipio":"Zamora","alta":"2016-01","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.200185,19.69417908]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"CUAUTLA","numero":"961.0","colonia":"JUAREZ","municipio":"Morelia","alta":"2018-03","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2256661,19.70759153]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"ESCUADRÓN 201 (DÉCIMA)","numero":"320.0","colonia":"IRRIGACION","municipio":"Morelia","alta":"2014-12","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.2828566,20.00829726]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"FRANCISCO I. MADERO NORTE","numero":"1377.0","colonia":"LA FLORIDA","municipio":"Zamora","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2156022,19.67501834]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PERIFÉRICO PASEO DE LA REPÚBLICA (SECTOR INDEPENDENCIA)","numero":"3140.0","colonia":"EX HACIENDA LA HUERTA","municipio":"Morelia","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.7161779,20.05521296]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"LÁZARO CÁRDENAS SUR","numero":"175.0","colonia":"DAMASO CARDENAS","municipio":"Sahuayo","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.0480304,19.42493265]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"CHIAPAS","numero":"768.0","colonia":"LOMAS DEL VALLE SUR","municipio":"Uruapan","alta":"2014-12","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.4488996,20.26786571]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"NINGUNO","numero":"278.0","colonia":"VISTA HERMOSA DE NEGRETE","municipio":"Vista Hermosa","alta":"2022-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.782531,19.80839379]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"MORELOS","numero":"1417.0","colonia":"PROLONGACION MORELOS","municipio":"Zacapu","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3778246,20.5701366]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PLAZA CAPUCHINAS","numero":"149.0","colonia":"PLAZAS DEL SOL TERCERA SECCION","municipio":"Querétaro","alta":"2010-07","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4403255,20.55417887]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"EL JACAL","numero":"1102.0","colonia":"PUERTA REAL EL PUEBLITO","municipio":"Corregidora","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4400131,20.69383599]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"AVENIDA DE LAS CIENCIAS","numero":"2077.0","colonia":"JURIQUILLA","municipio":"Querétaro","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4059882,20.63823076]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"MANZANA O EDIFICACIÓN CONTIGUA","numero":"1695.0","colonia":"LOS ROBLES","municipio":"Querétaro","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3756725,20.56649023]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"DAMIÁN CARMONA","numero":"18.0","colonia":"LA CRUZ","municipio":"Querétaro","alta":"2014-12","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.98387997,20.43529207]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"BENITO JUÁREZ ORIENTE","numero":"215.0","colonia":"INFONAVIT SAN CAYETANO","municipio":"San Juan del Río","alta":"2017-03","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4418526,20.6231098]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"ACCESO A SATÉLITE","numero":"1220.0","colonia":"EL ROCIO","municipio":"Querétaro","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4128146,20.59587938]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"RÍO AYUTLA","numero":"104.0","colonia":"LA PIEDAD","municipio":"Querétaro","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.9266243,22.13430834]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"JOSÉ DE GÁLVEZ","numero":"200.0","colonia":"ESTRELLA DE ORIENTE","municipio":"San Luis Potosí","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.6448343,23.65088524]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"BENITO JUÁREZ","numero":"118.0","colonia":"CENTRO","municipio":"Matehuala","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.9777747,22.16029754]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PEDRO MONTOYA","numero":"507.0","colonia":"CENTR0","municipio":"San Luis Potosí","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.9935712,21.92401703]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"JOSÉ MARÍA MORELOS SUR","numero":"1001.0","colonia":"CENTRO","municipio":"Rioverde","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.9390692,22.16819463]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"SEGUNDA DE SAN PEDRO","numero":"1288.0","colonia":"SAN FRANCISCO","municipio":"Soledad de Graciano Sánchez","alta":"2023-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.9943885,22.14081723]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"HIMNO NACIONAL","numero":"2025.0","colonia":" TANGAMANGA","municipio":"San Luis Potosí","alta":"2019-04","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.01516456,21.99885492]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"LÁZARO CÁRDENAS","numero":"","colonia":"PALMASOLA","municipio":"Ciudad Valles","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.3052366,20.44831556]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PUERTO VALLARTA","numero":"226.0","colonia":"ARVENTO","municipio":"Tlajomulco de Zúñiga","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.4674919,19.69281384]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"PRIMERO DE MAYO","numero":"507.0","colonia":"CENTRO","municipio":"Zapotlán el Grande","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.2508005,20.618724]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"TONALA","numero":"240.0","colonia":"SAN ELIAS","municipio":"Tonalá","alta":"2010-07","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.5882115,21.1078523]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"LA LUZ","numero":"5108.0","colonia":"CAMPO FUERTE","municipio":"León","alta":"2019-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-103.4006432,20.63345196]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"CRUZ DEL SUR","numero":"3195.0","colonia":"LOMAS DE LA VICTORIA","municipio":"San Pedro Tlaquepaque","alta":"2020-11","color":"#a855f7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3843143,20.59916211]},"properties":{"name":"SUKARNE","brand":"Sukarne","razon":"SUKARNE SA DE CV","estrato":"","calle":"DAMIAN CARMONA","numero":"18.0","colonia":"CENTRO HISTORICO","municipio":"Querétaro","alta":"2020-11","color":"#a855f7"}}]};
+const COMPETENCIA_DATA = {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6351043,21.14920009]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.7985194,20.54772825]},"properties":{"name":"ALIMENTOS SOLES","brand":"ALIMENTOS SOLES","razon":"ALIMENTOS SOLES SA DE CV","estrato":"31 a 50 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2019-11","color":"#673ab7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.7981145,20.54768798]},"properties":{"name":"ALIMENTOS SOLES","brand":"ALIMENTOS SOLES","razon":"ALIMENTOS SOLES SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2019-11","color":"#673ab7"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.4297454,20.94963811]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Silao de la Victoria","municipio":"Silao de la Victoria","alta":"2016-10","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8037022,20.5497003]},"properties":{"name":"SUSAZON","brand":"SUSAZON","razon":"SUSAZON SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6857445,21.13020499]},"properties":{"name":"SUSAZON","brand":"SUSAZON","razon":"SUSAZON SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.815214,20.55212835]},"properties":{"name":"SUSAZON","brand":"SUSAZON","razon":"SUSAZON SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8040472,20.55048181]},"properties":{"name":"SUSAZON","brand":"SUSAZON","razon":"SUSAZON SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8219306,20.52010278]},"properties":{"name":"SUSAZON","brand":"SUSAZON","razon":"SUSAZON SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8227679,20.53591413]},"properties":{"name":"SUSAZON","brand":"SUSAZON","razon":"SUSAZON SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6842874,21.07252352]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2016-10","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6519069,21.09714398]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2849534,20.98841658]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"Marfil","municipio":"Guanajuato","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.649038,21.16225738]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2016-01","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3668351,20.69314836]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Irapuato","municipio":"Irapuato","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2030945,20.55669868]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Salamanca","municipio":"Salamanca","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.8610298,21.0160363]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"San Francisco del Rincón","municipio":"San Francisco del Rincón","alta":"2016-01","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6550374,21.13008827]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3466676,20.66607686]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Irapuato","municipio":"Irapuato","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.7612477,20.91524231]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"San Miguel de Allende","municipio":"San Miguel de Allende","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.806604,20.53656407]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2016-01","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.842401,20.53269961]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2016-01","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6505458,21.10158902]},"properties":{"name":"CARNICERIA D MARCO","brand":"CARNICERIA D MARCO","razon":"CARNICERIA DE MARCO SA DE CV","estrato":"51 a 100 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2010-07","color":"#a52714"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6521175,21.09997728]},"properties":{"name":"CARNICERIA D MARCO","brand":"CARNICERIA D MARCO","razon":"CARNICERIA DE MARCO SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2010-07","color":"#a52714"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6639344,21.10515946]},"properties":{"name":"CARNICERIA D MARCO","brand":"CARNICERIA D MARCO","razon":"CARNICERIA DE MARCO SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2012-06","color":"#a52714"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8060495,20.51343772]},"properties":{"name":"SUPER MEAT","brand":"SUPER MEAT","razon":"CENTRO DE DISTRIBUCION DE CARNES SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2019-04","color":"#9c27b0"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8069629,20.51276139]},"properties":{"name":"SUPER MEAT","brand":"SUPER MEAT","razon":"CENTRO DE DISTRIBUCION DE CARNES SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2019-04","color":"#9c27b0"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6291254,21.08248039]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6839728,21.15723805]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7156309,21.08175235]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"31 a 50 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6946026,21.11099876]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2024-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7022921,21.13653401]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6896141,21.1395093]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6976907,21.1702376]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6868775,21.12241225]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.65181,21.10149652]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6846528,21.16507549]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6676385,21.12724681]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6671482,21.17470418]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6750233,21.14088489]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2020-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6695453,21.15263019]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6597626,21.16871871]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7476981,21.14013228]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6903869,21.10545788]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6627073,21.13727992]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7316626,21.12025611]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6211012,21.14796618]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6543495,21.15221746]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.710974,21.11238729]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.729731,21.15215027]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6133927,21.10192354]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6754733,21.18550077]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6476423,21.10830503]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6876872,21.12263946]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6930523,21.13905216]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.8504211,21.01845454]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"San Francisco del Rincón","municipio":"San Francisco del Rincón","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6846549,21.10121133]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.650787,21.08151552]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6728383,21.10035027]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.65009,21.13212175]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6465635,21.15329491]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6453566,21.09758425]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6184373,21.07537891]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6415768,21.07773034]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.5848707,21.103744]},"properties":{"name":"LA ALEMANA","brand":"LA ALEMANA","razon":"MENUDEO LA ALEMANA SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6508051,21.10187461]},"properties":{"name":"CARNICERIA D MARCO","brand":"CARNICERIA D MARCO","razon":"CARNICERIA DE MARCO SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#a52714"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.1993931,20.57262978]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Salamanca","municipio":"Salamanca","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.9612653,20.48434075]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Cortazar","municipio":"Cortazar","alta":"2016-10","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2046482,20.55862283]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Salamanca","municipio":"Salamanca","alta":"2018-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.1580066,20.53835239]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Fraccionamiento Barlovento","municipio":"Salamanca","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6868951,21.1224171]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6829707,21.11355309]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6294479,21.08227864]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3261749,20.68717292]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Irapuato","municipio":"Irapuato","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3376594,20.64388913]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Irapuato","municipio":"Irapuato","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8262669,20.52644586]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2018-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2005499,20.57415332]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Salamanca","municipio":"Salamanca","alta":"2016-01","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2836122,20.98183976]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Marfil","municipio":"Guanajuato","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.1906744,20.55958951]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Salamanca","municipio":"Salamanca","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3433658,20.67547511]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Irapuato","municipio":"Irapuato","alta":"2018-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8141378,20.51947825]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2077064,20.5553554]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Salamanca","municipio":"Salamanca","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3490307,20.66211411]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Irapuato","municipio":"Irapuato","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7016887,21.13971746]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6871802,21.12011951]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.199808,20.55462207]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Salamanca","municipio":"Salamanca","alta":"2018-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2176319,20.5682328]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Salamanca","municipio":"Salamanca","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2096073,20.57716456]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Salamanca","municipio":"Salamanca","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.4237621,20.9496198]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Silao de la Victoria","municipio":"Silao de la Victoria","alta":"2018-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6471103,21.15389619]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7084088,21.10329617]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2018-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.1848165,20.39453486]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Valle de Santiago","municipio":"Valle de Santiago","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6733292,21.13352097]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7075766,21.11842683]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8036978,20.54971204]},"properties":{"name":"SUSAZON","brand":"SUSAZON","razon":"SUSAZON SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3542107,20.6525511]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Irapuato","municipio":"Irapuato","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6830926,21.11358319]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.8105841,20.50997445]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Celaya","municipio":"Celaya","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.9237986,21.15542677]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Dolores Hidalgo Cuna de la Independencia Nacional","municipio":"Dolores Hidalgo Cuna de la Independencia Nacional","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.205619,20.58026901]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Salamanca","municipio":"Salamanca","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2870247,20.98589696]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Marfil","municipio":"Guanajuato","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6817589,21.07621919]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.724456,21.13904864]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.5875212,21.10767255]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6780455,21.13343486]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7235084,20.42523908]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Pénjamo","municipio":"Pénjamo","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6349841,21.14879371]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7075606,21.11847041]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.8623721,21.02862287]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Francisco del Rincón","municipio":"San Francisco del Rincón","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.4199769,20.94400807]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Silao de la Victoria","municipio":"Silao de la Victoria","alta":"2017-03","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6371801,21.0972092]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.646443,21.12817103]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.35762,20.68829978]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Irapuato","municipio":"Irapuato","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.9407644,21.35894038]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Lagos de Moreno","municipio":"Lagos de Moreno","alta":"2024-05","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.9198057,21.36228292]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Lagos de Moreno","municipio":"Lagos de Moreno","alta":"2020-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.9199553,21.36214323]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Lagos de Moreno","municipio":"Lagos de Moreno","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.0283506,20.34754222]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"La Piedad de Cabadas","municipio":"La Piedad","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.0257096,20.34558265]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"La Piedad de Cabadas","municipio":"La Piedad","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.98757938,20.3815709]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4109989,20.55128732]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"San José de los Olvera","municipio":"Corregidora","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4336713,20.60745284]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4064234,20.64879782]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4512128,20.63530755]},"properties":{"name":"CARNEMART","brand":"CARNEMART","razon":"ONUS COMERCIAL SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3969753,20.6059263]},"properties":{"name":"CARNES SUPREMAS LIDIA","brand":"CARNES SUPREMAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3977824,20.55907967]},"properties":{"name":"CARNES SUPREMAS LIDIA","brand":"CARNES SUPREMAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2013-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4456187,20.62241653]},"properties":{"name":"CARNICERIAS LIDIA","brand":"CARNICERIAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#ffea00"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.98891126,20.41165939]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2024-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.0010947,20.41524724]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.99324736,20.39251671]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.97961251,20.44305382]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2024-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3754394,20.5699696]},"properties":{"name":"SUPER MEAT","brand":"SUPER MEAT","razon":"CENTRO DE DISTRIBUCION DE CARNES SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-04","color":"#9c27b0"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.9936156,20.39233656]},"properties":{"name":"SUPER MEAT","brand":"SUPER MEAT","razon":"CENTRO DE DISTRIBUCION DE CARNES SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2010-07","color":"#9c27b0"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3728473,20.56745829]},"properties":{"name":"SUPER MEAT","brand":"SUPER MEAT","razon":"CENTRO DE DISTRIBUCION DE CARNES SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-04","color":"#9c27b0"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.1456737,20.49918194]},"properties":{"name":"SUPER MEAT","brand":"SUPER MEAT","razon":"CENTRO DE DISTRIBUCION DE CARNES SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Pedro Escobedo","municipio":"Pedro Escobedo","alta":"2014-12","color":"#9c27b0"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4926581,20.61312682]},"properties":{"name":"CARNICERIAS LIDIA","brand":"CARNICERIAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-11","color":"#ffea00"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.98809393,20.38212534]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.99011527,20.38450331]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2024-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.99011527,20.38450331]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.99011527,20.38450331]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.97019372,20.3903969]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.96452519,20.39684269]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2025-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.96461653,20.37608589]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2025-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.98892696,20.41157748]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2025-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.97019182,20.39040248]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2025-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.97964209,20.38540097]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2025-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.97759792,20.40056831]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2025-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.97963009,20.44306429]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2025-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.94812507,20.3756237]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2025-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.98821248,20.3822531]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2025-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.97859118,20.40067566]},"properties":{"name":"CARNICERIA OROZCO","brand":"CARNICERIA OROZCO","razon":"DICOSA SA DE CV","estrato":"51 a 100 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3738035,20.57070726]},"properties":{"name":"SUPER MEAT","brand":"SUPER MEAT","razon":"CENTRO DE DISTRIBUCION DE CARNES SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-04","color":"#9c27b0"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3776999,20.57002169]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4403255,20.55417887]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"El Pueblito","municipio":"Corregidora","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4400131,20.69383599]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Juriquilla","municipio":"Querétaro","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4059882,20.63823076]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3843624,20.59904573]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.98751139,20.38149762]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2017-03","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4418526,20.6231098]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4128146,20.59587938]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-04","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6351043,21.14920009]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"11 a 30 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.636015,21.12903867]},"properties":{"name":"CARNES FINAS SAN JUAN","brand":"CARNES FINAS SAN JUAN","razon":"CARNES FINAS SAN JUAN SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2024-11","color":"#795548"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.5885108,21.10778338]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3709393,20.68097107]},"properties":{"name":"SUSAZON","brand":"SUSAZON","razon":"SUSAZON SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Irapuato","municipio":"Irapuato","alta":"2017-03","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.0198926,20.34398803]},"properties":{"name":"DELTA","brand":"DELTA","razon":"INDUSTRIALIZADORA DE PORCINOS DELTA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santa Ana Pacueco","municipio":"Pénjamo","alta":"2023-11","color":"#558b2f"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.0172845,20.35403939]},"properties":{"name":"DELTA","brand":"DELTA","razon":"INDUSTRIALIZADORA DE PORCINOS DELTA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santa Ana Pacueco","municipio":"Pénjamo","alta":"2023-11","color":"#558b2f"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.2871995,20.98576036]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Marfil","municipio":"Guanajuato","alta":"2024-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.7479246,20.91903277]},"properties":{"name":"SUKARNE","brand":"SUKARNE","razon":"SUKARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Miguel de Allende","municipio":"San Miguel de Allende","alta":"2024-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3654114,20.66953891]},"properties":{"name":"SUCAHERSA","brand":"SUCAHERSA","razon":"DISTRIBUIDORA SUCAHERZA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Irapuato","municipio":"Irapuato","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7011464,21.15146141]},"properties":{"name":"SUSAZON","brand":"SUSAZON","razon":"SUSAZON SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2024-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.040459,20.35360158]},"properties":{"name":"DELTA","brand":"DELTA","razon":"INDUSTRIALIZADORA DE PORCINOS DELTA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"La Piedad de Cabadas","municipio":"La Piedad","alta":"2024-11","color":"#558b2f"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3668243,20.56834597]},"properties":{"name":"CARNES FINAS SAN JUAN","brand":"CARNES FINAS SAN JUAN","razon":"CARNES FINAS SAN JUAN SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2024-11","color":"#795548"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4044995,20.54431857]},"properties":{"name":"CARNES FINAS SAN JUAN","brand":"CARNES FINAS SAN JUAN","razon":"CARNES FINAS SAN JUAN SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"El Pueblito","municipio":"Corregidora","alta":"2014-12","color":"#795548"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.449064,20.71086308]},"properties":{"name":"CARNES FINAS SAN JUAN","brand":"CARNES FINAS SAN JUAN","razon":"CARNES FINAS SAN JUAN SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Juriquilla","municipio":"Querétaro","alta":"2024-11","color":"#795548"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4343081,20.55821202]},"properties":{"name":"CARNES FINAS SAN JUAN","brand":"CARNES FINAS SAN JUAN","razon":"CARNES FINAS SAN JUAN SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"El Pueblito","municipio":"Corregidora","alta":"2024-11","color":"#795548"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3863607,20.61379853]},"properties":{"name":"CARNES FINAS SAN JUAN","brand":"CARNES FINAS SAN JUAN","razon":"CARNES FINAS SAN JUAN SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-11","color":"#795548"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3765838,20.5639129]},"properties":{"name":"CARNES FINAS SAN JUAN","brand":"CARNES FINAS SAN JUAN","razon":"CARNES FINAS SAN JUAN SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2014-12","color":"#795548"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4259825,20.65785423]},"properties":{"name":"CARNES SUPREMAS LIDIA","brand":"CARNES SUPREMAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2023-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4173487,20.62672782]},"properties":{"name":"CARNES SUPREMAS LIDIA","brand":"CARNES SUPREMAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.1415032,20.49932307]},"properties":{"name":"CARNICERIA ALI","brand":"CARNICERIA ALI","razon":"ALICARNES DE QUERETARO SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Pedro Escobedo","municipio":"Pedro Escobedo","alta":"2019-11","color":"#01579b"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3962423,20.60283436]},"properties":{"name":"CARNICERIA ALI","brand":"CARNICERIA ALI","razon":"ALICARNES DE QUERETARO SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#01579b"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4323657,20.55834959]},"properties":{"name":"CARNICERIA ALI","brand":"CARNICERIA ALI","razon":"ALICARNES DE QUERETARO SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"El Pueblito","municipio":"Corregidora","alta":"2019-11","color":"#01579b"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4161639,20.54453824]},"properties":{"name":"CARNES FINAS SAN JUAN","brand":"CARNES FINAS SAN JUAN","razon":"CARNES FINAS SAN JUAN SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"El Pueblito","municipio":"Corregidora","alta":"2019-11","color":"#795548"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4455942,20.74351076]},"properties":{"name":"CARNICERIA LA SUPREMA","brand":"CARNICERIA LA SUPREMA","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santa Rosa Jáuregui","municipio":"Querétaro","alta":"2014-12","color":"#ffd600"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.99608971,20.39286399]},"properties":{"name":"CARNICERIA LA SUPREMA","brand":"CARNICERIA LA SUPREMA","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2013-07","color":"#ffd600"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4343791,20.64756327]},"properties":{"name":"CARNICERIA LA SUPREMA","brand":"CARNICERIA LA SUPREMA","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#ffd600"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.98643963,20.44098798]},"properties":{"name":"CARNICERIA LA SUPREMA","brand":"CARNICERIA LA SUPREMA","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2024-11","color":"#ffd600"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4184011,20.64538487]},"properties":{"name":"CARNICERIA LA SUPREMA","brand":"CARNICERIA LA SUPREMA","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2024-11","color":"#ffd600"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4087454,20.64530293]},"properties":{"name":"CARNICERIA LA SUPREMA","brand":"CARNICERIA LA SUPREMA","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-11","color":"#ffd600"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4012298,20.64453948]},"properties":{"name":"CARNICERIA LA SUPREMA","brand":"CARNICERIA LA SUPREMA","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-11","color":"#ffd600"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3956167,20.63318692]},"properties":{"name":"CARNICERIA LA SUPREMA","brand":"CARNICERIA LA SUPREMA","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2023-11","color":"#ffd600"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4022051,20.6499075]},"properties":{"name":"CARNICERIA LA SUPREMA","brand":"CARNICERIA LA SUPREMA","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2014-12","color":"#ffd600"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.39034,20.6366392]},"properties":{"name":"CARNICERIA LA SUPREMA","brand":"CARNICERIA LA SUPREMA","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2014-12","color":"#ffd600"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3989593,20.64646525]},"properties":{"name":"CARNICERIA LA SUPREMA","brand":"CARNICERIA LA SUPREMA","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#ffd600"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4176288,20.64631713]},"properties":{"name":"CARNICERIA LA SUPREMA","brand":"CARNICERIA LA SUPREMA","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2024-11","color":"#ffd600"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4003623,20.5640682]},"properties":{"name":"CARNES SUPREMAS LIDIA","brand":"CARNES SUPREMAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4894093,20.64063361]},"properties":{"name":"CARNES SUPREMAS LIDIA","brand":"CARNES SUPREMAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2024-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3671612,20.61048877]},"properties":{"name":"CARNES SUPREMAS LIDIA","brand":"CARNES SUPREMAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4571503,20.70852173]},"properties":{"name":"CARNES SUPREMAS LIDIA","brand":"CARNES SUPREMAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Juriquilla","municipio":"Querétaro","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4301942,20.5945349]},"properties":{"name":"CARNES SUPREMAS LIDIA","brand":"CARNES SUPREMAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4698505,20.64419079]},"properties":{"name":"CARNES SUPREMAS LIDIA","brand":"CARNES SUPREMAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-11","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4005193,20.59965156]},"properties":{"name":"CARNES SUPREMAS LIDIA","brand":"CARNES SUPREMAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4637952,20.64110057]},"properties":{"name":"CARNES SUPREMAS LIDIA","brand":"CARNES SUPREMAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4463305,20.71798641]},"properties":{"name":"CARNES SUPREMAS LIDIA","brand":"CARNES SUPREMAS LIDIA","razon":"CARNES SUPREMAS LIDIA SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Juriquilla","municipio":"Querétaro","alta":"2014-12","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.2361813,20.60536519]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Paseos del Marqués","municipio":"El Marqués","alta":"2024-11","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4559183,20.65999425]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-11","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4502719,20.64659722]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-11","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4505934,20.64977531]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4555036,20.62586005]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2024-11","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3997413,20.64962857]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2024-11","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4024244,20.66047999]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2014-12","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4103548,20.65064807]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4713506,20.63469615]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3871289,20.55413862]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3792383,20.56023109]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2014-12","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4160079,20.65125862]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2024-11","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4019238,20.65928583]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2024-11","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4138449,20.64855955]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2024-11","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4076882,20.62396548]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4025384,20.65982805]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3974076,20.65468825]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3962526,20.65352119]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2014-12","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4246994,20.619921]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4728765,20.66130095]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2025-04","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4723191,20.6610313]},"properties":{"name":"CARNICERIA SALAZAR","brand":"CARNICERIA SALAZAR","razon":"","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-11","color":"#006064"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-99.98455947,20.38631979]},"properties":{"name":"SUSAZON","brand":"SUSAZON","razon":"SUSAZON SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Juan del Río","municipio":"San Juan del Río","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.3764006,20.59340492]},"properties":{"name":"SUSAZON","brand":"SUSAZON","razon":"SUSAZON SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2010-07","color":"#db4436"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7280725,21.09566837]},"properties":{"name":"CARNES SELECTAS SOLIS","brand":"CARNES SELECTAS SOLIS","razon":"CARNES SELECTAS SOLIS SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2014-12","color":"#7cb342"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6537821,21.09684784]},"properties":{"name":"CARNICERIA D MARCO","brand":"CARNICERIA D MARCO","razon":"CARNICERIA DE MARCO SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2021-05","color":"#a52714"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.6881282,21.1546197]},"properties":{"name":"CARNES FINAS SAN JUAN","brand":"CARNES FINAS SAN JUAN","razon":"CARNES FINAS SAN JUAN SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2024-11","color":"#795548"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.7157373,21.10293536]},"properties":{"name":"CARNES SELECTAS SOLIS","brand":"CARNES SELECTAS SOLIS","razon":"CARNES SELECTAS SOLIS SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"León de los Aldama","municipio":"León","alta":"2019-11","color":"#7cb342"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.8587656,21.01358713]},"properties":{"name":"PEPE FILETE","brand":"PEPE FILETE","razon":"EMPACADORA BONNACARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"San Francisco del Rincón","municipio":"San Francisco del Rincón","alta":"2024-11","color":"#817717"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.0198328,20.34425009]},"properties":{"name":"PEPE FILETE","brand":"PEPE FILETE","razon":"EMPACADORA BONNACARNE SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Santa Ana Pacueco","municipio":"Pénjamo","alta":"2010-07","color":"#817717"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.4288191,20.94728785]},"properties":{"name":"PEPE FILETE","brand":"PEPE FILETE","razon":"EMPACADORA BONNACARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Silao de la Victoria","municipio":"Silao de la Victoria","alta":"2024-11","color":"#817717"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.3422843,20.67612892]},"properties":{"name":"PEPE FILETE","brand":"PEPE FILETE","razon":"EMPACADORA BONNACARNE SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"Irapuato","municipio":"Irapuato","alta":"2010-07","color":"#817717"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-101.9214108,21.36077454]},"properties":{"name":"PEPE FILETE","brand":"PEPE FILETE","razon":"EMPACADORA BONNACARNE SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Lagos de Moreno","municipio":"Lagos de Moreno","alta":"2019-11","color":"#817717"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-102.0231516,20.34260868]},"properties":{"name":"PEPE FILETE","brand":"PEPE FILETE","razon":"EMPACADORA BONNACARNE SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"La Piedad de Cabadas","municipio":"La Piedad","alta":"2010-07","color":"#817717"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4003203,20.54153373]},"properties":{"name":"CARNICERIA ALI","brand":"CARNICERIA ALI","razon":"ALICARNES DE QUERETARO SA DE CV","estrato":"0 a 5 personas","calle":"","numero":"","colonia":"El Pueblito","municipio":"Corregidora","alta":"2019-11","color":"#01579b"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4437873,20.61575066]},"properties":{"name":"CARNICERIA ALI","brand":"CARNICERIA ALI","razon":"ALICARNES DE QUERETARO SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2019-11","color":"#01579b"}},{"type":"Feature","geometry":{"type":"Point","coordinates":[-100.4047225,20.64648974]},"properties":{"name":"CARNICERIA ALI","brand":"CARNICERIA ALI","razon":"ALICARNES DE QUERETARO SA DE CV","estrato":"6 a 10 personas","calle":"","numero":"","colonia":"Santiago de Querétaro","municipio":"Querétaro","alta":"2014-12","color":"#01579b"}}]};
 
 // ============================================================
 //  INIT MAP
@@ -1493,8 +1598,15 @@ function initMap() {
       if (centerPin) map.removeLayer(centerPin);
       const pinIcon = L.divIcon({
         className: '',
-        html: `<div style="width:18px;height:18px;background:#a78bfa;border:3px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,0.5);"></div>`,
-        iconSize: [18,18], iconAnchor: [9,18]
+        html: `<div style="width:32px;height:32px;position:relative;display:flex;align-items:center;justify-content:center;">
+          <div style="position:absolute;width:30px;height:30px;border-radius:50%;border:2px solid #3b82f6;opacity:0.6;"></div>
+          <div style="position:absolute;width:9px;height:9px;border-radius:50%;background:#3b82f6;"></div>
+          <div style="position:absolute;left:0;top:50%;width:11px;height:3px;background:#3b82f6;transform:translateY(-50%);"></div>
+          <div style="position:absolute;right:0;top:50%;width:11px;height:3px;background:#3b82f6;transform:translateY(-50%);"></div>
+          <div style="position:absolute;top:0;left:50%;height:11px;width:3px;background:#3b82f6;transform:translateX(-50%);"></div>
+          <div style="position:absolute;bottom:0;left:50%;height:11px;width:3px;background:#3b82f6;transform:translateX(-50%);"></div>
+        </div>`,
+        iconSize: [32,32], iconAnchor: [16,16]
       });
       centerPin = L.marker([e.latlng.lat, e.latlng.lng], { icon: pinIcon, zIndexOffset: 1000 })
         .bindTooltip('📍 Centro isócrona — presiona Calcular', {
@@ -1505,6 +1617,88 @@ function initMap() {
       document.getElementById('iso-status').style.color = 'var(--accent2)';
     }
   });
+}
+
+// ============================================================
+//  TABLA FORMATOS POR CIUDAD
+// ============================================================
+function showFmtModal() {
+  const overlay = document.getElementById('fmt-modal-overlay');
+  const body    = document.getElementById('fmt-modal-body');
+
+  if (!EXPENDIOS_GEOJSON || !EXPENDIOS_GEOJSON.features || !EXPENDIOS_GEOJSON.features.length) {
+    body.innerHTML = '<p style="color:var(--muted);font-size:12px;text-align:center;padding:16px 0;">Sin datos cargados.</p>';
+    overlay.classList.add('open');
+    return;
+  }
+
+  const FMTS = ['Tipo A', 'Tipo B', 'MAXI-BARA'];
+  const FMT_COLORS = { 'Tipo A': '#FF1744', 'Tipo B': '#FFE500', 'MAXI-BARA': '#FF6D00' };
+
+  // Agrupar por ciudad solo "En Operación"
+  const table = {};
+  EXPENDIOS_GEOJSON.features.forEach(f => {
+    const p = f.properties || {};
+    if ((p['Estatus'] || '').trim() !== 'En Operación') return;
+    const ciudad = (p['Municipio:'] || '').trim() || '(Sin ciudad)';
+    const fmt    = (p['Formato']   || '').trim().replace(/\s+/g,' ');
+    if (!table[ciudad]) table[ciudad] = {};
+    table[ciudad][fmt] = (table[ciudad][fmt] || 0) + 1;
+  });
+
+  const ciudades = Object.keys(table).sort();
+  if (!ciudades.length) {
+    body.innerHTML = '<p style="color:var(--muted);font-size:12px;text-align:center;padding:16px 0;">No hay sucursales "En Operación".</p>';
+    overlay.classList.add('open');
+    return;
+  }
+
+  // Totales por formato
+  const totFmt = {};
+  FMTS.forEach(f => totFmt[f] = 0);
+  let grandTotal = 0;
+
+  let rows = '';
+  ciudades.forEach(ciudad => {
+    let rowTotal = 0;
+    let cells = '';
+    FMTS.forEach(fmt => {
+      const n = table[ciudad][fmt] || 0;
+      totFmt[fmt] += n;
+      rowTotal += n;
+      cells += `<td class="${n === 0 ? 'fmt-zero' : ''}">${n === 0 ? '—' : n}</td>`;
+    });
+    grandTotal += rowTotal;
+    rows += `<tr><td>${ciudad}</td>${cells}<td style="font-weight:700">${rowTotal}</td></tr>`;
+  });
+
+  // Fila de totales
+  let totalCells = FMTS.map(f => `<td>${totFmt[f]}</td>`).join('');
+  rows += `<tr class="fmt-total-row"><td>TOTAL</td>${totalCells}<td>${grandTotal}</td></tr>`;
+
+  // Cabeceras con color por formato
+  const ths = FMTS.map(f =>
+    `<th style="color:${FMT_COLORS[f]}">${f}</th>`
+  ).join('');
+
+  body.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Ciudad</th>${ths}<th style="color:var(--accent2)">Total</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p style="margin-top:12px;font-size:10px;color:var(--muted);text-align:right">
+      Solo sucursales con Estatus: <strong style="color:var(--green)">En Operación</strong>
+    </p>`;
+
+  overlay.classList.add('open');
+}
+
+function closeFmtModal() {
+  document.getElementById('fmt-modal-overlay').classList.remove('open');
 }
 
 function setBasemap(name) {
@@ -1546,6 +1740,7 @@ function setBasemap(name) {
 //  CARGAR EXPENDIOS
 // ============================================================
 function loadExpendios(geojson) {
+  EXPENDIOS_GEOJSON = geojson;
   // Limpiar marcadores viejos
   expendioMarkers.forEach(m => map.removeLayer(m));
   expendioMarkers = [];
@@ -1643,6 +1838,7 @@ function loadExpendios(geojson) {
 //  CARGAR COMPETIDORES REALES (COMPETENCIA_DATA)
 // ============================================================
 const BRAND_COLORS = {};  // populated by loadCompetencia
+const COMP_COLOR_UNIFIED = '#8b0000'; // Rojo sangre — competencia
 
 function loadCompetencia() {
   if (!COMPETENCIA_DATA || !COMPETENCIA_DATA.features) return;
@@ -1651,29 +1847,32 @@ function loadCompetencia() {
   if (compLayerGroup) { map.removeLayer(compLayerGroup); compLayerGroup = null; }
   competenciaMarkers = [];
 
-  // Recopilar marcas únicas para filtros
+  // Recopilar marcas únicas para filtros + conteos en un solo recorrido (O(n))
   const brands = {};
+  const brandCounts = {};
   COMPETENCIA_DATA.features.forEach(f => {
     const p = f.properties;
     const brand = p.brand || 'Otro';
-    const color = p.color || '#94a3b8';
+    const color = COMP_COLOR_UNIFIED;
     brands[brand] = color;
     BRAND_COLORS[brand] = color;
+    brandCounts[brand] = (brandCounts[brand] || 0) + 1;
   });
 
   // Inicializar todas las marcas visibles
   visibleBrands = new Set(Object.keys(brands));
 
-  // Generar chips de filtro
+  // Generar chips de filtro (usando conteos pre-calculados)
   const filterRow = document.getElementById('brand-filter-row');
   if (filterRow) {
-    filterRow.innerHTML = Object.entries(brands).map(([brand, color]) => {
-      const count = COMPETENCIA_DATA.features.filter(f => f.properties.brand === brand).length;
+    const color = COMP_COLOR_UNIFIED;
+    filterRow.innerHTML = Object.entries(brands).map(([brand, _color]) => {
+      const count = brandCounts[brand] || 0;
       return `<div class="brand-chip" data-brand="${brand}"
-        style="background:${color}22;border-color:${color}66;color:${color};"
+        style="background:${color}22;border-color:${color}55;color:${color};"
         onclick="toggleBrand(this,'${brand}')">
         <span class="brand-chip-dot" style="background:${color};box-shadow:0 0 4px ${color}99;"></span>
-        ${brand} <span style="opacity:0.7">(${count})</span>
+        ${brand} <span style="opacity:0.65">(${count})</span>
       </div>`;
     }).join('');
   }
@@ -1684,49 +1883,30 @@ function loadCompetencia() {
     if (!f.geometry || f.geometry.type !== 'Point') return;
     const [lng, lat] = f.geometry.coordinates;
     const p = f.properties;
-    const color = p.color || '#94a3b8';
+    const color = COMP_COLOR_UNIFIED;
     const brand = p.brand || 'Otro';
 
-    // Icono: nombre encima + diamante + doble anillo giratorio (Opción B)
-    const diam  = 18;   // diamante px
-    const rOuter= 28;   // radio anillo exterior px
-    const rInner= 20;   // radio anillo interior px
-    const totalW = rOuter * 2 + 8;  // ancho total del contenedor
+    // Icono unificado: pin circular con pulso naranja
+    const r = 10;
+    const totalW = 64;
     const nameLabel = p.name || brand;
 
-    // El contenedor HTML: centrado, con anillo exterior, anillo interior, nombre y diamante
     const markerHtml = `
-      <div style="
-        display:flex; flex-direction:column; align-items:center;
-        width:${totalW}px; position:relative;
-      ">
-        <div class="comp-name-label" style="color:${color}; width:${totalW + 20}px; margin-left:-10px;">
+      <div style="display:flex;flex-direction:column;align-items:center;width:${totalW}px;position:relative;">
+        <div class="comp-name-label" style="color:${color};width:${totalW+30}px;margin-left:-15px;font-size:9px;">
           ${nameLabel}
         </div>
-        <div style="position:relative; width:${rOuter*2}px; height:${rOuter*2}px; display:flex; align-items:center; justify-content:center;">
-          <div class="comp-ring-outer" style="
-            width:${rOuter*2}px; height:${rOuter*2}px;
-            border-color:${color}; top:0; left:0;
-          "></div>
-          <div class="comp-ring-inner" style="
-            width:${rInner*2}px; height:${rInner*2}px;
-            border-color:${color};
-            top:${rOuter - rInner}px; left:${rOuter - rInner}px;
-          "></div>
-          <svg xmlns="http://www.w3.org/2000/svg"
-            width="${diam}" height="${diam}" viewBox="0 0 24 24"
-            style="position:relative;z-index:2;flex-shrink:0;">
-            <polygon points="12,1 23,12 12,23 1,12"
-              fill="${color}" fill-opacity="0.92"
-              stroke="rgba(255,255,255,0.75)" stroke-width="1.5"/>
-            <polygon points="12,5 19,12 12,19 5,12"
-              fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="0.8"/>
-          </svg>
+        <div style="position:relative;width:36px;height:36px;display:flex;align-items:center;justify-content:center;">
+          <div style="position:absolute;width:26px;height:26px;border-radius:50%;border:1.5px solid ${color};opacity:0.45;pointer-events:none;"></div>
+          <div style="width:20px;height:20px;border-radius:50%;background:${color};border:2px solid rgba(255,255,255,0.85);box-shadow:0 0 8px ${color}99,0 2px 4px rgba(0,0,0,0.5);position:relative;z-index:2;display:flex;align-items:center;justify-content:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L22 12L12 22L2 12Z" fill="rgba(255,255,255,0.9)"/>
+            </svg>
+          </div>
         </div>
       </div>`;
 
-    // ancla: centro del anillo = centro horizontal, parte baja del anillo = punto geográfico
-    const anchorY = 14 + rOuter * 2; // label height + ring height
+    const anchorY = 14 + 36;
     const icon = L.divIcon({
       className: 'comp-marker-label',
       html: markerHtml,
@@ -1737,14 +1917,14 @@ function loadCompetencia() {
 
     const marker = L.marker([lat, lng], { icon, pane: 'expendioPane' });
     marker._brand = brand;
-    marker._compColor = color;
+    marker._compColor = COMP_COLOR_UNIFIED;
     marker._distKm = null;
 
     const calleNum = [p.calle, p.numero].filter(Boolean).join(' ');
     const estrato  = p.estrato || '—';
     marker.bindPopup(`
-      <div class="pop-title" style="color:${color}">${p.name || brand}</div>
-      <div class="pop-row"><span>Cadena</span><span style="color:${color};font-weight:700">${brand}</span></div>
+      <div class="pop-title" style="color:${color}">${brand}</div>
+      <div class="pop-row"><span>Suc.</span><span style="font-weight:700">${p.name || '—'}</span></div>
       <div class="pop-row"><span>Razón social</span><span>${p.razon || '—'}</span></div>
       <div class="pop-row"><span>Dirección</span><span>${calleNum || '—'}</span></div>
       <div class="pop-row"><span>Colonia</span><span>${p.colonia || '—'}</span></div>
@@ -1763,18 +1943,47 @@ function loadCompetencia() {
   updateCompMarkersVisibility();
 
   // Populate competitor legend
+  // La leyenda del mapa se actualiza dinámicamente al calcular el área (updateCompLegend)
+}
+
+// ============================================================
+//  LEYENDA MAPA — desglose por cadena, solo las del área activa
+// ============================================================
+function updateCompLegend(expendiosDentro) {
   const legBrands = document.getElementById('comp-legend-brands');
-  if (legBrands) {
-    legBrands.innerHTML = Object.entries(brands).map(([brand, color]) =>
-      '<div class="leg-row">'
-      + '<span class="leg-dot" style="background:' + color + ';box-shadow:0 0 6px ' + color + '99;clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);border-radius:0;"></span>'
-      + '<span style="flex:1">' + brand + '</span>'
-      + '<span style="font-family:var(--font-mono);font-size:11px;color:' + color + ';font-weight:700;">'
-      + COMPETENCIA_DATA.features.filter(f => f.properties.brand === brand).length
-      + '</span>'
-      + '</div>'
-    ).join('');
+  if (!legBrands) return;
+
+  if (!expendiosDentro || !expendiosDentro.length) {
+    legBrands.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:6px 0;">Sin competidores en el área</div>';
+    return;
   }
+
+  const byBrand = {};
+  expendiosDentro.forEach(m => {
+    const b = m._brand || 'Otro';
+    byBrand[b] = (byBrand[b] || 0) + 1;
+  });
+
+  const sorted = Object.entries(byBrand).sort((a, b) => b[1] - a[1]);
+  const color  = COMP_COLOR_UNIFIED;
+  const total  = expendiosDentro.length;
+
+  const rows = sorted.map(([brand, cnt]) => {
+    const pct = Math.round(cnt / total * 100);
+    return '<div style="display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid var(--border);">'
+      + '<span style="width:9px;height:9px;border-radius:50%;background:' + color + ';flex-shrink:0;"></span>'
+      + '<span style="flex:1;font-size:11px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + brand + '</span>'
+      + '<span style="font-family:var(--font-mono);font-size:10px;color:var(--muted);">' + pct + '%</span>'
+      + '<span style="font-family:var(--font-mono);font-size:11px;color:' + color + ';font-weight:700;min-width:18px;text-align:right;">' + cnt + '</span>'
+      + '</div>';
+  }).join('');
+
+  const footer = '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0 2px;">'
+    + '<span style="font-size:10px;color:var(--muted);">Total en área</span>'
+    + '<span style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:' + color + ';">' + total + '</span>'
+    + '</div>';
+
+  legBrands.innerHTML = rows + footer;
 }
 
 function toggleBrand(el, brand) {
@@ -1802,10 +2011,19 @@ function updateCompMarkersVisibility() {
 // ============================================================
 let MANZANAS_DATA = null;
 
+// Caché de centroides: se calcula una sola vez al cargar las manzanas
+// y se reutiliza en cada análisis (radio, isócrona, polígono, KML)
+let _centroidCache = null;
+
 function loadManzanas(geojson) {
   MANZANAS_DATA = geojson;
 
   if (manzanaLayer) map.removeLayer(manzanaLayer);
+
+  // Pre-calcular centroides de todas las manzanas una sola vez
+  _centroidCache = geojson.features.map(f => {
+    try { return turf.centroid(f); } catch(e) { return null; }
+  });
 
   // Todas las manzanas comienzan invisibles — solo se colorean las que
   // intersectan con el radio/isócrona activo (ver highlightManzanas)
@@ -1827,20 +2045,19 @@ function loadManzanas(geojson) {
 // Resalta solo las manzanas dentro del área activa (radio o isócrona)
 // usando la misma lógica de intersección que el análisis de stats.
 function highlightManzanas(centerPt, bufferKm, isoFeature) {
-  if (!manzanaLayer) return;
+  if (!manzanaLayer || !_centroidCache) return;
 
+  let i = 0;
   manzanaLayer.eachLayer(layer => {
     const f = layer._mzaFeature || layer.feature;
-    if (!f) return;
+    const centroid = _centroidCache[i++];
+    if (!f || !centroid) return;
 
     let dentro = false;
     try {
-      const centroid = turf.centroid(f);
       if (isoFeature) {
-        // Modo isócrona: punto en polígono
         dentro = turf.booleanPointInPolygon(centroid, isoFeature);
       } else {
-        // Modo radio: distancia al centro
         const dist = turf.distance(centerPt, centroid, { units: 'kilometers' });
         dentro = dist <= bufferKm;
       }
@@ -1871,6 +2088,9 @@ function getDensColor(pop) {
 function updateAnalysis() {
   if (!selectedCenter || !MANZANAS_DATA) return;
 
+  // Habilitar botón Limpiar Todo del toolbar
+  document.getElementById('dtool-clear').disabled = false;
+
   const lat = selectedCenter.lat;
   const lng = selectedCenter.lng;
   const radiusM = currentRadius;
@@ -1896,10 +2116,11 @@ function updateAnalysis() {
   let manzanasDentro = 0;
   let mzaBaja = 0, mzaMedia = 0, mzaAlta = 0;
 
-  MANZANAS_DATA.features.forEach(f => {
+  MANZANAS_DATA.features.forEach((f, i) => {
     try {
-      // Calcular centroide de manzana
-      const centroid = turf.centroid(f);
+      // Usar centroide cacheado
+      const centroid = _centroidCache ? _centroidCache[i] : turf.centroid(f);
+      if (!centroid) return;
       const dist = turf.distance(centerPt, centroid, { units: 'kilometers' });
       if (dist <= bufferKm) {
         manzanasDentro++;
@@ -1967,22 +2188,23 @@ function updateAnalysis() {
   const compDentro = allCompetidores.filter(m => m._inZone);
   currentCompData = { expendiosDentro: compDentro, allCompetidores, centerPt, bufferKm };
 
+  updateCompLegend(compDentro);
   updateLegend(expendiosDentro, mzaBaja, mzaMedia, mzaAlta, manzanasDentro);
 
   // Pin central con tooltip permanente (siempre visible)
   if (centerPin) map.removeLayer(centerPin);
   const pinIcon = L.divIcon({
     className: '',
-    html: `<div style="
-      width:21px;height:21px;
-      background:var(--accent);
-      border:3px solid #fff;
-      border-radius:50% 50% 50% 0;
-      transform:rotate(-45deg);
-      box-shadow:0 2px 8px rgba(0,0,0,0.5);
-    "></div>`,
-    iconSize: [21, 21],
-    iconAnchor: [10, 21]
+    html: `<div style="width:32px;height:32px;position:relative;display:flex;align-items:center;justify-content:center;">
+      <div style="position:absolute;width:30px;height:30px;border-radius:50%;border:2px solid #3b82f6;opacity:0.6;"></div>
+      <div style="position:absolute;width:9px;height:9px;border-radius:50%;background:#3b82f6;"></div>
+      <div style="position:absolute;left:0;top:50%;width:11px;height:3px;background:#3b82f6;transform:translateY(-50%);"></div>
+      <div style="position:absolute;right:0;top:50%;width:11px;height:3px;background:#3b82f6;transform:translateY(-50%);"></div>
+      <div style="position:absolute;top:0;left:50%;height:11px;width:3px;background:#3b82f6;transform:translateX(-50%);"></div>
+      <div style="position:absolute;bottom:0;left:50%;height:11px;width:3px;background:#3b82f6;transform:translateX(-50%);"></div>
+    </div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
   });
 
   // Clasificación de densidad para el tooltip
@@ -1992,7 +2214,8 @@ function updateAnalysis() {
 
   centerPin = L.marker([lat, lng], { icon: pinIcon, zIndexOffset: 1000 })
     .bindTooltip(`
-      <div style="font-family:var(--font-mono);font-size:12px;line-height:1.8">
+      <div style="font-family:var(--font-mono);font-size:12px;line-height:1.8;position:relative;padding-right:16px;">
+        <button onclick="if(centerPin)centerPin.closeTooltip()" title="Cerrar" style="position:absolute;top:-2px;right:-2px;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:15px;line-height:1;padding:0;" onmouseover="this.style.color='#f1f5f9'" onmouseout="this.style.color='#94a3b8'">×</button>
         <div style="font-weight:700;color:#60a5fa;margin-bottom:4px">📍 Centro de análisis</div>
         <div>👥 Pob Tot: <strong>${pobTot.toLocaleString('es-MX')}</strong></div>
         <div>🚺 Fem: <strong>${pobTot > 0 ? (pobFem/pobTot*100).toFixed(1) : 0}%</strong> (${pobFem.toLocaleString('es-MX')})</div>
@@ -2010,6 +2233,10 @@ function updateAnalysis() {
     })
     .addTo(map);
   centerPin.openTooltip();
+  centerPin.on('click', function() {
+    if (centerPin.isTooltipOpen()) centerPin.closeTooltip();
+    else centerPin.openTooltip();
+  });
 
   // Colorear solo manzanas dentro del radio
   highlightManzanas(centerPt, bufferKm, null);
@@ -2205,10 +2432,19 @@ function renderSucursales(expList, pobTot) {
   const THRESH_SAT  = 6000;    // hab/sucursal → saturado
   const THRESH_OPT  = 12000;   // hab/sucursal → oportunidad
 
-  const ratio         = totalTiendas > 0 && pobTot > 0 ? Math.round(pobTot / totalTiendas) : null;
-  const coberturaPct  = totalTiendas > 0 ? Math.min(Math.round((totalTiendas * CAP_POR_TIENDA / Math.max(pobTot, 1)) * 100), 100) : 0;
+  // ratio: habitantes por sucursal (cuántos hab. atiende cada tienda)
+  const ratio = totalTiendas > 0 && pobTot > 0 ? Math.round(pobTot / totalTiendas) : null;
+
+  // coberturaPct: % del mercado ya atendido por la competencia
+  // Una tienda atiende THRESH_SAT hab → si hay más tiendas que ese umbral, mercado saturado
+  // Fórmula: tiendas_necesarias_para_saturar = pobTot / THRESH_SAT
+  //          cobertura = totalTiendas / tiendas_necesarias × 100
+  const tiendasParaSaturar = pobTot > 0 ? pobTot / THRESH_SAT : 0;
+  const coberturaPct  = tiendasParaSaturar > 0
+    ? Math.min(Math.round((totalTiendas / tiendasParaSaturar) * 100), 100)
+    : 0;
   const disponiblePct = 100 - coberturaPct;
-  const tiendasParaSat = pobTot > 0 ? Math.max(0, Math.ceil(pobTot / THRESH_SAT) - totalTiendas) : null;
+  const tiendasParaSat = pobTot > 0 ? Math.max(0, Math.ceil(tiendasParaSaturar) - totalTiendas) : null;
 
   // Color según estado
   let satColor, satBg, satLabel;
@@ -2359,6 +2595,9 @@ async function calcularIsocrona() {
 
     const data = await resp.json();
 
+    // Habilitar botón Limpiar Todo del toolbar
+    document.getElementById('dtool-clear').disabled = false;
+
     // Remover isócrona anterior
     if (isoLayer) { map.removeLayer(isoLayer); isoLayer = null; }
     // Remover círculo de radio
@@ -2407,7 +2646,8 @@ async function calcularIsocrona() {
                   : densidad <= 10000 ? { label: 'Zona Media', color: '#f59e0b', emoji: '🟡' }
                   :                    { label: 'Zona Alta',  color: '#ef4444', emoji: '🔴' };
       centerPin.setTooltipContent(`
-        <div style="font-family:var(--font-mono);font-size:12px;line-height:1.8">
+        <div style="font-family:var(--font-mono);font-size:12px;line-height:1.8;position:relative;padding-right:16px;">
+          <button onclick="if(centerPin)centerPin.closeTooltip()" title="Cerrar" style="position:absolute;top:-2px;right:-2px;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:15px;line-height:1;padding:0;" onmouseover="this.style.color='#f1f5f9'" onmouseout="this.style.color='#94a3b8'">×</button>
           <div style="font-weight:700;color:#a78bfa;margin-bottom:4px">${modeEmoji} Isócrona · ${isoMinutes} min ${profileLabel}</div>
           <div>👥 Pob Tot: <strong>${pobTot.toLocaleString('es-MX')}</strong></div>
           <div>♀ Fem: <strong>${pobTot > 0 ? (pobFem/pobTot*100).toFixed(1) : 0}%</strong> (${pobFem.toLocaleString('es-MX')})</div>
@@ -2418,6 +2658,13 @@ async function calcularIsocrona() {
         </div>
       `);
       centerPin.openTooltip();
+      if (!centerPin._tooltipToggleBound) {
+        centerPin.on('click', function() {
+          if (centerPin.isTooltipOpen()) centerPin.closeTooltip();
+          else centerPin.openTooltip();
+        });
+        centerPin._tooltipToggleBound = true;
+      }
     }
 
     statusEl.textContent = `✅ Isócrona ${isoMinutes} min ${profileLabel}`;
@@ -2436,9 +2683,10 @@ function calcularEstadisticasIso(isoFeature, profileLabel) {
   let p0_14 = 0, p15_29 = 0, p30_59 = 0, p60m = 0;
   let mzaBaja = 0, mzaMedia = 0, mzaAlta = 0, manzanasDentro = 0;
 
-  MANZANAS_DATA.features.forEach(f => {
+  MANZANAS_DATA.features.forEach((f, i) => {
     try {
-      const centroid = turf.centroid(f);
+      const centroid = _centroidCache ? _centroidCache[i] : turf.centroid(f);
+      if (!centroid) return;
       if (turf.booleanPointInPolygon(centroid, isoFeature)) {
         manzanasDentro++;
         const p = f.properties;
@@ -2496,6 +2744,7 @@ function calcularEstadisticasIso(isoFeature, profileLabel) {
                    _isoLabel: `Isócrona ${isoMinutes} min ${profileLabel}` };
 
   const compDentro = allCompetidores.filter(m => m._inZone);
+  updateCompLegend(compDentro);
   currentCompData = {
     expendiosDentro: compDentro,
     allCompetidores,
@@ -2516,18 +2765,32 @@ function calcularEstadisticasIso(isoFeature, profileLabel) {
   updateCompHeatLayer();
 }
 
+// Utilidad debounce: evita recalcular en cada movimiento del slider
+function _debounce(fn, ms) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), ms);
+  };
+}
+
+const _debouncedUpdateAnalysis  = _debounce(updateAnalysis, 180);
+const _debouncedRenderStats     = _debounce(renderStats, 120);
+
 document.getElementById('radius-slider').addEventListener('input', function() {
   currentRadius = parseInt(this.value);
+  // Actualizar etiqueta inmediatamente (sin lag visual)
   document.getElementById('radius-val').textContent = currentRadius >= 1000
     ? (currentRadius/1000).toFixed(1) + ' km'
     : currentRadius + ' m';
-  if (selectedCenter && currentMode === 'radio') updateAnalysis();
+  // Recalcular con debounce para no saturar mientras se arrastra
+  if (selectedCenter && currentMode === 'radio') _debouncedUpdateAnalysis();
 });
 
 document.getElementById('part-slider').addEventListener('input', function() {
   currentPart = parseInt(this.value);
   document.getElementById('part-val').textContent = currentPart + '%';
-  if (currentStats) renderStats();
+  if (currentStats) _debouncedRenderStats();
 });
 
 function centerMap() {
@@ -2601,10 +2864,11 @@ function exportarCSV() {
   a.click();
 }
 
-// Listeners parámetros de consumo
+// Listeners parámetros de consumo (con debounce para no recalcular mientras se escribe)
+const _debouncedUpdateAnalysisConsumo = _debounce(updateAnalysis, 400);
 ['c-res','c-cerdo','c-pollo'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => {
-    if (selectedCenter) updateAnalysis();
+    if (selectedCenter) _debouncedUpdateAnalysisConsumo();
   });
 });
 
@@ -2703,10 +2967,11 @@ function drawLayersOnCanvas(ctx, mapW, mapH) {
     const centerPt = turf.point([selectedCenter.lng, selectedCenter.lat]);
     const bufferKm = currentRadius / 1000;
 
-    MANZANAS_DATA.features.forEach(f => {
+    MANZANAS_DATA.features.forEach((f, i) => {
       try {
         if (!f.geometry || f.geometry.type !== 'Polygon') return;
-        const centroid = turf.centroid(f);
+        const centroid = _centroidCache ? _centroidCache[i] : turf.centroid(f);
+        if (!centroid) return;
         let dentro = false;
         if (currentMode === 'isocrona' && lastIsoFeature) {
           dentro = turf.booleanPointInPolygon(centroid, lastIsoFeature);
@@ -2997,9 +3262,11 @@ async function exportarPDF() {
 // ============================================================
 //  TOMTOM TRÁFICO EN TIEMPO REAL
 // ============================================================
-let ttApiKey = 'DH7Cgw6EPz95ZnC1H8Uo51fJxeU0N3aX';
+// ⚠️ Reemplaza con tu propia API Key de TomTom (developer.tomtom.com)
+let ttApiKey = '';
 let ttLayers = { flow: null, inc: null };
 let ttPanelOpen = false;
+let tileErrorShown = false; // en scope global para evitar spam de mensajes de error
 
 function toggleTomTomPanel() {
   ttPanelOpen = !ttPanelOpen;
@@ -3081,7 +3348,7 @@ async function applyTomTom() {
   );
 
   // ── Detectar errores en los tiles al cargar ──
-  let tileErrorShown = false;
+  tileErrorShown = false;
   ttLayers.flow.on('tileerror', function(err) {
     if (!tileErrorShown) {
       tileErrorShown = true;
@@ -3418,7 +3685,7 @@ function exportarKMLManzanas() {
       </LinearRing></outerBoundaryIs></Polygon>
     </Placemark>`;
 
-  } else if (currentMode === 'iso' && lastIsoFeature) {
+  } else if (currentMode === 'isocrona' && lastIsoFeature) {
     const geom = lastIsoFeature.geometry;
     let outerRing = geom.type === 'Polygon' ? geom.coordinates[0] : geom.coordinates[0][0];
     const coords = outerRing.map(([lng, lat]) => `${lng.toFixed(6)},${lat.toFixed(6)},0`).join(' ');
@@ -3437,12 +3704,13 @@ function exportarKMLManzanas() {
   const bufferKm = currentRadius / 1000;
   let mzCount = 0;
 
-  MANZANAS_DATA.features.forEach(f => {
+  MANZANAS_DATA.features.forEach((f, i) => {
     try {
       let dentro = false;
-      const centroid = turf.centroid(f);
+      const centroid = _centroidCache ? _centroidCache[i] : turf.centroid(f);
+      if (!centroid) return;
 
-      if (currentMode === 'iso' && lastIsoFeature) {
+      if (currentMode === 'isocrona' && lastIsoFeature) {
         dentro = turf.booleanPointInPolygon(centroid, lastIsoFeature);
       } else {
         const dist = turf.distance(centerPt, centroid, { units: 'kilometers' });
@@ -3711,7 +3979,7 @@ function stopEdit() {
   hideHint();
 }
 
-// ── Limpiar todo ──
+// ── Limpiar solo el polígono dibujado ──
 function clearPolygon() {
   cancelDraw();
   stopEdit();
@@ -3726,6 +3994,63 @@ function clearPolygon() {
   document.getElementById('poly-stats-panel').style.display = 'none';
 }
 
+// ── Limpiar TODO el portal: radio, isócrona, polígono, pin y stats ──
+function limpiarTodo() {
+  // 1. Polígono dibujado
+  clearPolygon();
+
+  // 2. Círculo de radio
+  if (circleLayer) { map.removeLayer(circleLayer); circleLayer = null; }
+
+  // 3. Isócrona
+  if (isoLayer) { map.removeLayer(isoLayer); isoLayer = null; }
+  lastIsoFeature = null;
+
+  // 4. Manzanas coloreadas
+  if (manzanaLayer) { map.removeLayer(manzanaLayer); manzanaLayer = null; }
+
+  // 5. Pin central
+  if (centerPin) { map.removeLayer(centerPin); centerPin = null; }
+
+  // 6. Marcadores de competidores — remover el layer group del mapa
+  if (compLayerGroup) {
+    if (map.hasLayer(compLayerGroup)) map.removeLayer(compLayerGroup);
+    compLayerGroup = null;
+  }
+  if (compHeatLayer) {
+    if (map.hasLayer(compHeatLayer)) map.removeLayer(compHeatLayer);
+    compHeatLayer = null;
+  }
+
+  // 7. Estado global
+  selectedCenter  = null;
+  currentStats    = null;
+  currentCompData = null;
+  lastIsoFeature  = null;
+
+  // 8. Resetear status de isócrona
+  const isoStatus = document.getElementById('iso-status');
+  if (isoStatus) { isoStatus.textContent = ''; }
+
+  // 9. Ocultar paneles de resultados y mostrar mensaje vacío
+  document.getElementById('stats-content').style.display  = 'none';
+  document.getElementById('no-data-msg').style.display    = 'block';
+  document.getElementById('comp-content').style.display   = 'none';
+  document.getElementById('comp-no-data').style.display   = 'block';
+  document.getElementById('comp-legend').style.display    = 'none';
+  updateCompLegend([]);
+
+  // 10. Limpiar leyenda de contadores
+  ['leg-cnt-std','leg-cnt-amp','leg-cnt-pls',
+   'leg-pct-low','leg-pct-med','leg-pct-high'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  // 11. Recargar competidores para que estén disponibles en el siguiente análisis
+  loadCompetencia();
+}
+
 // ── Calcular estadísticas del polígono ──
 function calcPolyStats() {
   if (!polyData || !MANZANAS_DATA) return;
@@ -3734,9 +4059,10 @@ function calcPolyStats() {
   const C = getConsumo();
   let pobTot = 0, pobFem = 0, pobMas = 0, mzCount = 0;
 
-  MANZANAS_DATA.features.forEach(f => {
+  MANZANAS_DATA.features.forEach((f, i) => {
     try {
-      const centroid = turf.centroid(f);
+      const centroid = _centroidCache ? _centroidCache[i] : turf.centroid(f);
+      if (!centroid) return;
       if (!turf.booleanPointInPolygon(centroid, poly)) return;
       mzCount++;
       const p = f.properties || {};
@@ -3821,13 +4147,13 @@ function exportPolyKML() {
   const kml = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
-    <n>${name} — Polígono dibujado</n>
+    <name>${name} — Polígono dibujado</name>
     <Style id="polyStyle">
       <LineStyle><color>ff8b4cf6</color><width>3</width></LineStyle>
       <PolyStyle><color>1a8b4cf6</color></PolyStyle>
     </Style>
     <Placemark>
-      <n>${name}</n>
+      <name>${name}</name>
       <description><![CDATA[
         <b>Polígono de análisis — S.I.G.Ex</b><br/>
         Fecha: ${fecha}<br/><br/>
@@ -3958,8 +4284,9 @@ function switchScenario(scen) {
 // ============================================================
 const COMP_PESO = { 'Tipo A': 1.0, 'MAXI-BARA': 0.9, 'Tipo B': 0.6 };
 
+// Amenaza decrece linealmente de 100 (0 km) a 0 (5 km)
 function calcAmenaza(distKm) {
-  return Math.max(0, Math.round(100 - (distKm / 0.02)));
+  return Math.max(0, Math.round(100 - (distKm * 20)));
 }
 
 function getAmenazaLabel(score) {
@@ -4007,20 +4334,26 @@ function renderCompetencia() {
     return minD < 1 ? Math.round(minD * 1000) + ' m min.' : minD.toFixed(2) + ' km min.';
   };
 
-  // Renderizar contadores de cadena dinámicamente
+  // Renderizar contadores de cadena dinámicamente (solo con presencia en el área)
   const tipoGrid = document.querySelector('.comp-tipo-grid');
   if (tipoGrid) {
-    const allBrands = Object.keys(BRAND_COLORS);
-    tipoGrid.innerHTML = allBrands.map(b => {
-      const color = BRAND_COLORS[b] || '#94a3b8';
-      const cnt   = (byBrand[b] || []).length;
-      const dist  = fmt_dist(b);
-      return '<div class="comp-tipo-cell">'
-        + '<div class="comp-tipo-label" style="color:' + color + '">' + b + '</div>'
-        + '<div class="comp-tipo-val" style="color:' + color + '">' + cnt + '</div>'
-        + '<div class="comp-tipo-dist">' + (cnt > 0 ? dist : '—') + '</div>'
-        + '</div>';
-    }).join('');
+    const brandsPresentes = Object.keys(byBrand)
+      .filter(b => byBrand[b] && byBrand[b].length > 0)
+      .sort((a, b) => byBrand[b].length - byBrand[a].length);
+    if (brandsPresentes.length === 0) {
+      tipoGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:18px 0;color:var(--muted);font-family:var(--font-mono);font-size:11px;">Sin competidores en el área</div>';
+    } else {
+      tipoGrid.innerHTML = brandsPresentes.map(b => {
+        const color = COMP_COLOR_UNIFIED;
+        const cnt   = (byBrand[b] || []).length;
+        const dist  = fmt_dist(b);
+        return '<div class="comp-tipo-cell">'
+          + '<div class="comp-tipo-label" style="color:#ffffff">' + b + '</div>'
+          + '<div class="comp-tipo-val" style="color:#ffffff">' + cnt + '</div>'
+          + '<div class="comp-tipo-dist">' + dist + '</div>'
+          + '</div>';
+      }).join('');
+    }
   }
 
   // Presion competitiva
@@ -4057,6 +4390,7 @@ function renderCompetencia() {
   document.getElementById('comp-total-zona').textContent =
     expendiosDentro.length + ' tienda' + (expendiosDentro.length !== 1 ? 's' : '');
 
+  updateCompLegend(expendiosDentro);
   renderCompTable();
 }
 
@@ -4091,7 +4425,7 @@ function renderCompTable() {
   else rows.sort((a, b) => b.score - a.score);
 
   tbody.innerHTML = rows.map((r, i) => {
-    const color  = r.m._compColor || BRAND_COLORS[r.m._brand] || '#94a3b8';
+    const color  = COMP_COLOR_UNIFIED;
     const amenaz = getAmenazaLabel(r.score);
     const distStr = r.distKm < 1
       ? Math.round(r.distKm * 1000) + ' m'
@@ -4143,7 +4477,7 @@ function updateCompHeatLayer() {
     if (!visibleBrands.has(m._brand)) return;
     const distKm = m._distKm !== undefined ? m._distKm : 99;
     const score  = calcAmenaza(distKm);
-    const color  = m._compColor || BRAND_COLORS[m._brand] || '#94a3b8';
+    const color  = COMP_COLOR_UNIFIED;
     const radio  = 150 + score * 5;
 
     const circle = L.circle(m.getLatLng(), {

@@ -1,0 +1,1316 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.590978,
+          21.095156
+        ]
+      },
+      "properties": {
+        "name": "CONSTELACION",
+        "Clave": "León 16",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "independiente",
+        "Municipio:": "León",
+        "Fecha Apertura": "02/08/2019",
+        "Renta:": "$10,297.12",
+        "m2:": "110",
+        "Es Esquina": "Si",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.617448,
+          21.076809
+        ]
+      },
+      "properties": {
+        "name": "EXPRESS",
+        "Clave": "León 20",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Independiente",
+        "Municipio:": "León",
+        "Fecha Apertura": "10/02/2022",
+        "Renta:": "$7,507.54",
+        "m2:": "50.26",
+        "Es Esquina": "Si",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.641653,
+          21.075898
+        ]
+      },
+      "properties": {
+        "name": "LAS NORIAS",
+        "Clave": "León 21",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "independiente",
+        "Municipio:": "León",
+        "Fecha Apertura": "23/03/2022",
+        "Renta:": "$8,738.27",
+        "m2:": "41.81",
+        "Es Esquina": "Si",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.668814,
+          21.161749
+        ]
+      },
+      "properties": {
+        "name": "VALLE DE LEÓN",
+        "Clave": "León 22",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "23.Mar.22",
+        "Renta:": "$8,738.27",
+        "m2:": "67.4",
+        "Es Esquina": "Si",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.647814,
+          21.086476
+        ]
+      },
+      "properties": {
+        "name": "ROBLE DE JEREZ",
+        "Clave": "León 23",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "30/03/2022",
+        "Renta:": "$8,738.27",
+        "m2:": "63.13",
+        "Es Esquina": "Si",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -100.850674,
+          20.556201
+        ]
+      },
+      "properties": {
+        "name": "Hda DON GU",
+        "Clave": "Celaya 12",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Area de Serivcio",
+        "Municipio:": "Celaya",
+        "Fecha Apertura": "2.Ago.22",
+        "Renta:": "$3,234.01",
+        "m2:": "80",
+        "Es Esquina": "NO",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -100.806758,
+          20.539598
+        ]
+      },
+      "properties": {
+        "name": "BENITO JUAREZ",
+        "Clave": "Celaya 11",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Acceso Directo",
+        "Municipio:": "Celaya",
+        "Fecha Apertura": "30/08/2022",
+        "Renta:": "$5,544.03",
+        "m2:": "40.41",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -100.797144,
+          20.541507
+        ]
+      },
+      "properties": {
+        "name": "TIERRA Y LIBERTAD",
+        "Clave": "Celaya 9",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "Celaya",
+        "Fecha Apertura": "07/10/2022",
+        "Renta:": "$5,544.02",
+        "m2:": "63.13",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -100.796259,
+          20.521334
+        ]
+      },
+      "properties": {
+        "name": "INSURGENTES",
+        "Clave": "Celaya 10",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Con Acceso Directo",
+        "Municipio:": "Celaya",
+        "Fecha Apertura": "30/09/2022",
+        "Renta:": "$5,544.02",
+        "m2:": "68.00",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.634897,
+          21.077574
+        ]
+      },
+      "properties": {
+        "name": "TORREMOLINOS",
+        "Clave": "León 24",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "17-Oct-23",
+        "Renta:": "$4,333.63",
+        "m2:": "40.41",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.708451,
+          21.106533
+        ]
+      },
+      "properties": {
+        "name": "OBRERO MUNDIAL",
+        "Clave": "León 25",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Con Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "03/10/2023",
+        "Renta:": "$5,527.89",
+        "m2:": "68.01",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.926906,
+          21.327274
+        ]
+      },
+      "properties": {
+        "name": "LA CAPILLA",
+        "Clave": "Lagos  2",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Acceso Directo",
+        "Municipio:": "Lagos Jal",
+        "Fecha Apertura": "28/12/2023",
+        "Renta:": "$4,350.79",
+        "m2:": "60",
+        "Es Esquina": "Si",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -100.528509,
+          20.536193
+        ]
+      },
+      "properties": {
+        "name": "MALDONADO",
+        "Clave": "Apaseo Gde",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "Apaseo",
+        "Fecha Apertura": "29/12/2023",
+        "Renta:": "$9,308.2",
+        "m2:": "60.34",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.341811,
+          20.648838
+        ]
+      },
+      "properties": {
+        "name": "CARMELITAS (Switch)",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "independiente",
+        "Municipio:": "Irapuato",
+        "Fecha Apertura": "26/04/2024",
+        "Renta:": "$6,633.14",
+        "m2:": "77m²",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.327012,
+          20.65906
+        ]
+      },
+      "properties": {
+        "name": "TIERRA NUEVA",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Independiente",
+        "Municipio:": "Irapuato",
+        "Fecha Apertura": "29/04/2024",
+        "Renta:": "$9,834.66",
+        "m2:": "82 m²",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.34997,
+          20.66629
+        ]
+      },
+      "properties": {
+        "name": "PIPILA",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "independiente",
+        "Municipio:": "Irapuato",
+        "Fecha Apertura": "31/07/2024",
+        "Renta:": "$4,350.79",
+        "m2:": "61 m²",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.384984,
+          20.644361
+        ]
+      },
+      "properties": {
+        "name": "CLAVEL (Switch)",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "intependiente",
+        "Municipio:": "Irapuato",
+        "Fecha Apertura": "30/07/2024",
+        "Renta:": "$6,891.64",
+        "m2:": "32m²",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.605606,
+          21.105176
+        ]
+      },
+      "properties": {
+        "name": "BRISAS DEL CARMEN",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "",
+        "Renta:": "$9,051.13",
+        "m2:": "48",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.331944,
+          20.677503
+        ]
+      },
+      "properties": {
+        "name": "PARAISOS",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Acceso Directo",
+        "Municipio:": "Irapuato",
+        "Fecha Apertura": "",
+        "Renta:": "$10,862.59",
+        "m2:": "58.3",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.323404,
+          20.692627
+        ]
+      },
+      "properties": {
+        "name": "VILLAS SN CAYETANO",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "Irapuato",
+        "Fecha Apertura": "09/05/2025",
+        "Renta:": "$10,152.5",
+        "m2:": "54.49 m²",
+        "Es Esquina": "Si",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.337875,
+          20.643847
+        ]
+      },
+      "properties": {
+        "name": "LA FLORESTA",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Acceso Directo",
+        "Municipio:": "Irapuato",
+        "Fecha Apertura": "09/05/2025",
+        "Renta:": "$10,022.07",
+        "m2:": "53.79",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.762826,
+          21.090259
+        ]
+      },
+      "properties": {
+        "name": "CUMBRES GLORIA",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "",
+        "Renta:": "$11,419",
+        "m2:": "63.44",
+        "Es Esquina": "Si",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.629032,
+          21.089037
+        ]
+      },
+      "properties": {
+        "name": "JEREZ",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "16/02/2026",
+        "Renta:": "$10,009.2",
+        "m2:": "46.65",
+        "Es Esquina": "Si",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.63188,
+          21.162627
+        ]
+      },
+      "properties": {
+        "name": "COL DE PLATA",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "17/02/2026",
+        "Renta:": "$11,972",
+        "m2:": "49.65",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.632068,
+          21.070538
+        ]
+      },
+      "properties": {
+        "name": "VALLE DE SAN JOSE",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "23/03/2022",
+        "Renta:": "$13,070.16",
+        "m2:": "60.51",
+        "Es Esquina": "No",
+        "Estatus": "Remodelación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.674979,
+          21.181556
+        ]
+      },
+      "properties": {
+        "name": "PASEO DE LA PRESA",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "",
+        "Renta:": "$8,000",
+        "m2:": "141",
+        "Es Esquina": "No",
+        "Estatus": "Remodelación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.730443,
+          21.103861
+        ]
+      },
+      "properties": {
+        "name": "LEON II",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "",
+        "Renta:": "$12,789.36",
+        "m2:": "59.21",
+        "Es Esquina": "Si",
+        "Estatus": "Remodelación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.649475,
+          21.172741
+        ]
+      },
+      "properties": {
+        "name": "BRISAS DEL LAGO",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "",
+        "Renta:": "$14,456.88",
+        "m2:": "62.1",
+        "Es Esquina": "No",
+        "Estatus": "Remodelación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.581358,
+          21.095785
+        ]
+      },
+      "properties": {
+        "name": "VILLAS DE LA LUZ",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "",
+        "Renta:": "$14,342.4",
+        "m2:": "66.4",
+        "Es Esquina": "Si",
+        "Estatus": "Remodelación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.36768,
+          20.67237
+        ]
+      },
+      "properties": {
+        "name": "MDO OAXACA",
+        "Clave": "Irapuato 2",
+        "Formato": "Tipo A",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Irapuato",
+        "Fecha Apertura": "30/10/2014",
+        "Renta:": "$18,274.51",
+        "m2:": "198.84",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.419084,
+          20.597779
+        ]
+      },
+      "properties": {
+        "name": "PLANTA",
+        "Clave": "Irapuato 1",
+        "Formato": "Tipo A",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Irapuato",
+        "Fecha Apertura": "03/04/2014",
+        "Renta:": "0",
+        "m2:": "75",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -100.821637,
+          20.529045
+        ]
+      },
+      "properties": {
+        "name": "CAÑITOS",
+        "Clave": "Celaya 2",
+        "Formato": "Tipo A",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Celaya",
+        "Fecha Apertura": "18/04/2017",
+        "Renta:": "$8,365.87",
+        "m2:": "90",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -100.807569,
+          20.517894
+        ]
+      },
+      "properties": {
+        "name": "ANTONIO PLAZA",
+        "Clave": "Celaya 4",
+        "Formato": "Tipo A",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Celaya",
+        "Fecha Apertura": "28/12/2016",
+        "Renta:": "$18,979.87",
+        "m2:": "165",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -100.398891,
+          20.545576
+        ]
+      },
+      "properties": {
+        "name": "CANDILES",
+        "Clave": "Qro 1",
+        "Formato": "Tipo A",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Qro",
+        "Fecha Apertura": "28/07/2018",
+        "Renta:": "$44,925.8",
+        "m2:": "171",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.2009,
+          20.574219
+        ]
+      },
+      "properties": {
+        "name": "SALAMANCA 1",
+        "Clave": "SALAMANCA 1",
+        "Formato": "Tipo A",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Salamanca",
+        "Fecha Apertura": "22/10/2015",
+        "Renta:": "16158.03",
+        "m2:": "82",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.355339,
+          20.671299
+        ]
+      },
+      "properties": {
+        "name": "SAN CAYETANO",
+        "Clave": "Irapuato 14",
+        "Formato": "Tipo A",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "Irapuato",
+        "Fecha Apertura": "20/05/2021",
+        "Renta:": "$13,294.77",
+        "m2:": "75",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.628214,
+          21.083173
+        ]
+      },
+      "properties": {
+        "name": "DELTA",
+        "Clave": "León 5",
+        "Formato": "Tipo A",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "León",
+        "Fecha Apertura": "31/05/2017",
+        "Renta:": "$21,188.75",
+        "m2:": "214",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.683195,
+          21.113591
+        ]
+      },
+      "properties": {
+        "name": "CARRO VERDE",
+        "Clave": "León 1",
+        "Formato": "Tipo A",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "León",
+        "Fecha Apertura": "31/08/2016",
+        "Renta:": "$13,646.49",
+        "m2:": "147.41",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.723338,
+          20.428677
+        ]
+      },
+      "properties": {
+        "name": "PENJAMO",
+        "Clave": "Penjamo 1",
+        "Formato": "Tipo A",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Penjamo",
+        "Fecha Apertura": "28/05/2018",
+        "Renta:": "$21,188.75",
+        "m2:": "101",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.347775,
+          20.663622
+        ]
+      },
+      "properties": {
+        "name": "Av. Gto",
+        "Clave": "Irapuato 3",
+        "Formato": "Tipo A",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Irapuato",
+        "Fecha Apertura": "01/12/2014",
+        "Renta:": "$26,449.57",
+        "m2:": "125.57",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -102.023963,
+          20.342418
+        ]
+      },
+      "properties": {
+        "name": "LA PIEDAD 3",
+        "Clave": "LA Piedad 3",
+        "Formato": "Tipo A",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "LPM",
+        "Fecha Apertura": "16/03/2019",
+        "Renta:": "$19,458.02",
+        "m2:": "359.08",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.425566,
+          20.938456
+        ]
+      },
+      "properties": {
+        "name": "RAMAL",
+        "Clave": "Silao 2",
+        "Formato": "Tipo A",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Silao",
+        "Fecha Apertura": "23/07/2021",
+        "Renta:": "$7,790.91",
+        "m2:": "123",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.426289,
+          20.945052
+        ]
+      },
+      "properties": {
+        "name": "SILAO 1",
+        "Clave": "silao 1",
+        "Formato": "Tipo B",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Silao",
+        "Fecha Apertura": "30/12/2017",
+        "Renta:": "$21,982.88",
+        "m2:": "78.89",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.645219,
+          21.130691
+        ]
+      },
+      "properties": {
+        "name": "FCO VILLA",
+        "Clave": "León 2",
+        "Formato": "Tipo B",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "16/11/2016",
+        "Renta:": "$15,370.79",
+        "m2:": "71.62",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.708039,
+          21.134336
+        ]
+      },
+      "properties": {
+        "name": "SN JUAN BOSCO",
+        "Clave": "LEON 7",
+        "Formato": "Tipo B",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "León",
+        "Fecha Apertura": "28/11/2017",
+        "Renta:": "$12,727.26",
+        "m2:": "58.9",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.644068,
+          21.164815
+        ]
+      },
+      "properties": {
+        "name": "COECILLO",
+        "Clave": "León 13",
+        "Formato": "Tipo B",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "León",
+        "Fecha Apertura": "30/12/2017",
+        "Renta:": "$8,189.74",
+        "m2:": "65.63",
+        "Es Esquina": "Si",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.25893,
+          21.02156
+        ]
+      },
+      "properties": {
+        "name": "ALHONDIGA",
+        "Clave": "GTO 2",
+        "Formato": "Tipo B",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Gto Capital",
+        "Fecha Apertura": "09/09/2019",
+        "Renta:": "$16,881.39",
+        "m2:": "76.22",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.198869,
+          20.55458
+        ]
+      },
+      "properties": {
+        "name": "COMUNICACIÓN",
+        "Clave": "Salamanca 3",
+        "Formato": "Tipo B",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Salamanca",
+        "Fecha Apertura": "30/11/2017",
+        "Renta:": "$11,306.32",
+        "m2:": "50.4",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -100.820843,
+          20.542174
+        ]
+      },
+      "properties": {
+        "name": "AV TECNOLOGICO",
+        "Clave": "Celaya 8",
+        "Formato": "Tipo B",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Celaya",
+        "Fecha Apertura": "24/11/2018",
+        "Renta:": "$12,659.12",
+        "m2:": "56.11",
+        "Es Esquina": "Si",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.941035,
+          21.359086
+        ]
+      },
+      "properties": {
+        "name": "LAGOS",
+        "Clave": "Lagos. 1",
+        "Formato": "Tipo B",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Lagos Jal",
+        "Fecha Apertura": "18/09/2019",
+        "Renta:": "$8,081.47",
+        "m2:": "94.79",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.372705,
+          20.659697
+        ]
+      },
+      "properties": {
+        "name": "SAN MIGUELITO",
+        "Clave": "Irapuato 12",
+        "Formato": "Tipo B",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Irapuato",
+        "Fecha Apertura": "31/12/2019",
+        "Renta:": "$14,900",
+        "m2:": "106",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.364993,
+          20.690367
+        ]
+      },
+      "properties": {
+        "name": "REFORMA",
+        "Clave": "Irapuato 4",
+        "Formato": "Tipo B",
+        "Tipo de Sinergia": "N/A",
+        "Municipio:": "Irapuato",
+        "Fecha Apertura": "15/01/2015",
+        "Renta:": "$11,412.37",
+        "m2:": "53.02",
+        "Es Esquina": "No",
+        "Estatus": "En Operación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.668229,
+          21.092375
+        ]
+      },
+      "properties": {
+        "name": "SANTO DOMINGO",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "",
+        "Renta:": "$10,484.64",
+        "m2:": "48.54",
+        "Es Esquina": "Si",
+        "Estatus": "x Remodelar",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -100.4479031,
+          20.5537151
+        ]
+      },
+      "properties": {
+        "name": "SANTUARIOS",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "QRO",
+        "Fecha Apertura": "",
+        "Renta:": "$8,812.8",
+        "m2:": "40.8",
+        "Es Esquina": "Si",
+        "Estatus": "x Remodelar",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.7572488,
+          21.1703714
+        ]
+      },
+      "properties": {
+        "name": "PASEO LAS TORRES",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "",
+        "Renta:": "$8,000",
+        "m2:": "141",
+        "Es Esquina": "No",
+        "Estatus": "Remodelación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.7216907,
+          21.128703
+        ]
+      },
+      "properties": {
+        "name": "El FARO",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "",
+        "Renta:": "$12,206.16",
+        "m2:": "56.51",
+        "Es Esquina": "No",
+        "Estatus": "Remodelación",
+        "Venta kg": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.7682105,
+          21.1426227
+        ]
+      },
+      "properties": {
+        "name": "LA MARQUEZA",
+        "Clave": "",
+        "Formato": "MAXI-BARA",
+        "Tipo de Sinergia": "Sin Acceso Directo",
+        "Municipio:": "León",
+        "Fecha Apertura": "",
+        "Renta:": "$13,348.8",
+        "m2:": "61.8",
+        "Es Esquina": "No",
+        "Estatus": "x Remodelar",
+        "Venta kg": ""
+      }
+    }
+  ]
+}
